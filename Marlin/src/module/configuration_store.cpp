@@ -1421,7 +1421,7 @@ void MarlinSettings::postprocess() {
 
     #if ENABLED(EEPROM_CHITCHAT) && DISABLED(DISABLE_M503)
       if (!validating) report(
-        #if NUM_SERIAL > 1
+        #if ADD_PORT_ARG
           port
         #endif
       );
@@ -1432,13 +1432,13 @@ void MarlinSettings::postprocess() {
   }
 
   bool MarlinSettings::validate(
-    #if NUM_SERIAL > 1
+    #if ADD_PORT_ARG
       const int8_t port/*=-1*/
     #endif
   ) {
     validating = true;
     const bool success = _load(
-      #if NUM_SERIAL > 1
+      #if ADD_PORT_ARG
         port
       #endif
     );
@@ -1838,7 +1838,7 @@ void MarlinSettings::reset(
    * Unless specifically disabled, M503 is available even without EEPROM
    */
   void MarlinSettings::report(const bool forReplay
-    #if NUM_SERIAL > 1
+    #if ADD_PORT_ARG
       , const int8_t port/*=-1*/
     #endif
   ) {
@@ -2268,9 +2268,12 @@ void MarlinSettings::reset(
       #if ENABLED(SKEW_CORRECTION_FOR_Z)
         SERIAL_ECHO_P(port, "  M852 I");
         SERIAL_ECHO_F_P(port, LINEAR_UNIT(planner.xy_skew_factor), 6);
-        SERIAL_ECHOPAIR_P(port, " J", LINEAR_UNIT(planner.xz_skew_factor));
-        SERIAL_ECHOLNPAIR_P(port, " K", LINEAR_UNIT(planner.yz_skew_factor));
-      #else
+        SERIAL_ECHOPGM_P(port, " J");
+        SERIAL_ECHO_F_P(port, LINEAR_UNIT(planner.xz_skew_factor), 6);
+        SERIAL_ECHOPGM_P(port, " K");
+        SERIAL_ECHO_F_P(port, LINEAR_UNIT(planner.yz_skew_factor), 6);
+        SERIAL_EOL_P(port);
+       #else
         SERIAL_ECHO_P(port, "  M852 S");
         SERIAL_ECHO_F_P(port, LINEAR_UNIT(planner.xy_skew_factor), 6);
         SERIAL_EOL_P(port);
