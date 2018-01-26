@@ -42,9 +42,6 @@
 
 #include <U8glib.h>
 
-//set optimization so ARDUINO optimizes this file
-#pragma GCC optimize (3)
-
 // If you want you can define your own set of delays in Configuration.h
 //#define ST7920_DELAY_1 DELAY_0_NOP
 //#define ST7920_DELAY_2 DELAY_0_NOP
@@ -98,6 +95,9 @@ static void ST7920_WRITE_BYTE(uint8_t val) {
     val <<= 1;
   }
 }
+
+//set optimization so ARDUINO optimizes this file
+#pragma GCC optimize (3)
 
 #define ST7920_SET_CMD()         { ST7920_WRITE_BYTE(0xF8); U8G_DELAY(); }
 #define ST7920_SET_DAT()         { ST7920_WRITE_BYTE(0xFA); U8G_DELAY(); }
