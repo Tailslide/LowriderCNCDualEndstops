@@ -558,7 +558,7 @@
  * Override with M201
  *                                      X, Y, Z, E0 [, E1[, E2[, E3[, E4]]]]
  */
-#define DEFAULT_MAX_ACCELERATION      { 1800, 1800, 5000, 5000 }
+#define DEFAULT_MAX_ACCELERATION      { 1500, 1500, 5000, 5000 }
 
 /**
  * Default Acceleration (change/s) change = mm/s
@@ -568,7 +568,7 @@
  *   M204 R    Retract Acceleration
  *   M204 T    Travel Acceleration
  */
-#define DEFAULT_ACCELERATION          1800    // X, Y, Z and E acceleration for printing moves
+#define DEFAULT_ACCELERATION          1500    // X, Y, Z and E acceleration for printing moves
 #define DEFAULT_RETRACT_ACCELERATION  3000    // E acceleration for retracts
 #define DEFAULT_TRAVEL_ACCELERATION   2000    // X, Y, Z acceleration for travel (non printing) moves
 
@@ -580,8 +580,8 @@
  * When changing speed and direction, if the difference is less than the
  * value set here, it may happen instantaneously.
  */
-#define DEFAULT_XJERK                  10
-#define DEFAULT_YJERK                  10
+#define DEFAULT_XJERK                  5
+#define DEFAULT_YJERK                  5
 #define DEFAULT_ZJERK                  0.2
 #define DEFAULT_EJERK                  5.0
 
