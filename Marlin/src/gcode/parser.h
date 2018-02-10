@@ -32,6 +32,9 @@
 #include "../inc/MarlinConfig.h"
 
 //#define DEBUG_GCODE_PARSER
+#if ENABLED(DEBUG_GCODE_PARSER)
+  #include "../libs/hex_print_routines.h"
+#endif
 
 /**
  * GCode parser
@@ -95,13 +98,19 @@ public:
   #define LETTER_IND(N) PARAM_IND(LETTER_OFF(N))
   #define LETTER_BIT(N) PARAM_BIT(LETTER_OFF(N))
 
+  FORCE_INLINE static bool valid_signless(const char * const p) {
+    return NUMERIC(p[0]) || (p[0] == '.' && NUMERIC(p[1])); // .?[0-9]
+  }
+  FORCE_INLINE static bool valid_float(const char * const p) {
+    return valid_signless(p) || ((p[0] == '-' || p[0] == '+') && valid_signless(&p[1])); // [-+]?.?[0-9]
+  }
   #if ENABLED(FASTER_GCODE_PARSER)
 
     // Set the flag and pointer for a parameter
     static void set(const char c, char * const ptr) {
       const uint8_t ind = LETTER_OFF(c);
       if (ind >= COUNT(param)) return;           // Only A-Z
-      SBI(codebits[PARAM_IND(ind)], PARAM_BIT(ind));        // parameter exists
+      SBI32(codebits, ind);                      // parameter exists
       param[ind] = ptr ? ptr - command_ptr : 0;  // parameter offset or 0
       #if ENABLED(DEBUG_GCODE_PARSER)
         if (codenum == 800) {
@@ -117,14 +126,14 @@ public:
     static bool seen(const char c) {
       const uint8_t ind = LETTER_OFF(c);
       if (ind >= COUNT(param)) return false; // Only A-Z
-      const bool b = TEST(codebits[PARAM_IND(ind)], PARAM_BIT(ind));
+      const bool b = TEST32(codebits, ind);
       if (b) value_ptr = param[ind] ? command_ptr + param[ind] : (char*)NULL;
       return b;
     }
 
     static bool seen_any() { return codebits[3] || codebits[2] || codebits[1] || codebits[0]; }
 
-    #define SEEN_TEST(L) TEST(codebits[LETTER_IND(L)], LETTER_BIT(L))
+    #define SEEN_TEST(L) TEST32(codebits, LETTER_BIT(L))
 
   #else // !FASTER_GCODE_PARSER
 
