@@ -56,7 +56,7 @@ int GCodeParser::codenum;
 
 #if ENABLED(FASTER_GCODE_PARSER)
   // Optimized Parameters
-  byte GCodeParser::codebits[4];   // found bits
+  uint32_t GCodeParser::codebits;  // found bits
   uint8_t GCodeParser::param[26];  // parameter offsets from command_ptr
 #else
   char *GCodeParser::command_args; // start of parameters
@@ -79,7 +79,7 @@ void GCodeParser::reset() {
     subcode = 0;                        // No command sub-code
   #endif
   #if ENABLED(FASTER_GCODE_PARSER)
-    ZERO(codebits);                     // No codes yet
+    codebits = 0;                       // No codes yet
     //ZERO(param);                      // No parameters (should be safe to comment out this line)
   #endif
 }
@@ -192,14 +192,7 @@ void GCodeParser::parse(char *p) {
 
       while (*p == ' ') p++;                    // Skip spaces between parameters & values
 
-      const bool has_num = NUMERIC(p[0])                            // [0-9]
-                        || (p[0] == '.' && NUMERIC(p[1]))           // .[0-9]
-                        || (
-                              (p[0] == '-' || p[0] == '+') && (     // [-+]
-                                NUMERIC(p[1])                       //     [0-9]
-                                || (p[1] == '.' && NUMERIC(p[2]))   //     .[0-9]
-                              )
-                            );
+      const bool has_num = valid_float(p);
 
       #if ENABLED(DEBUG_GCODE_PARSER)
         if (debug) {
