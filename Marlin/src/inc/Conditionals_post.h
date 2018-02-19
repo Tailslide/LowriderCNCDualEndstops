@@ -617,6 +617,30 @@
 #endif
 
 /**
+ * Set ENDSTOPPULLDOWNS for active endstop switches
+ */
+#if ENABLED(ENDSTOPPULLDOWNS)
+  #if ENABLED(USE_XMAX_PLUG)
+    #define ENDSTOPPULLDOWN_XMAX
+  #endif
+  #if ENABLED(USE_YMAX_PLUG)
+    #define ENDSTOPPULLDOWN_YMAX
+  #endif
+  #if ENABLED(USE_ZMAX_PLUG)
+    #define ENDSTOPPULLDOWN_ZMAX
+  #endif
+  #if ENABLED(USE_XMIN_PLUG)
+    #define ENDSTOPPULLDOWN_XMIN
+  #endif
+  #if ENABLED(USE_YMIN_PLUG)
+    #define ENDSTOPPULLDOWN_YMIN
+  #endif
+  #if ENABLED(USE_ZMIN_PLUG)
+    #define ENDSTOPPULLDOWN_ZMIN
+  #endif
+#endif
+
+/**
  * Shorthand for pin tests, used wherever needed
  */
 
@@ -996,7 +1020,7 @@
 /**
  * Set granular options based on the specific type of leveling
  */
-#define UBL_SEGMENTED  (ENABLED(AUTO_BED_LEVELING_UBL) && (ENABLED(DELTA) || ENABLED(SEGMENT_LEVELED_MOVES)))
+#define UBL_SEGMENTED  (ENABLED(AUTO_BED_LEVELING_UBL) && (ENABLED(DELTA)))
 #define ABL_PLANAR     (ENABLED(AUTO_BED_LEVELING_LINEAR) || ENABLED(AUTO_BED_LEVELING_3POINT))
 #define ABL_GRID       (ENABLED(AUTO_BED_LEVELING_LINEAR) || ENABLED(AUTO_BED_LEVELING_BILINEAR))
 #define OLDSCHOOL_ABL  (ABL_PLANAR || ABL_GRID)
@@ -1120,9 +1144,9 @@
 #endif
 
 /**
- * VIKI2, miniVIKI, and AZSMZ_12864 require DOGLCD_SCK and DOGLCD_MOSI to be defined.
+ * VIKI2, miniVIKI, AZSMZ_12864, and MKS_12864OLED_SSD1306 require DOGLCD_SCK and DOGLCD_MOSI to be defined.
  */
-#if ENABLED(VIKI2) || ENABLED(miniVIKI) || ENABLED(AZSMZ_12864)
+#if ENABLED(VIKI2) || ENABLED(miniVIKI) || ENABLED(AZSMZ_12864) || ENABLED(MKS_12864OLED_SSD1306)
   #ifndef DOGLCD_SCK
     #define DOGLCD_SCK  SCK_PIN
   #endif

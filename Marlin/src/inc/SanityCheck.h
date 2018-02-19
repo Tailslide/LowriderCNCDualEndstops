@@ -78,7 +78,9 @@
 #elif defined(SDEXTRASLOW)
   #error "SDEXTRASLOW deprecated. Set SPI_SPEED to SPI_QUARTER_SPEED instead."
 #elif defined(FILAMENT_SENSOR)
-  #error "FILAMENT_SENSOR is deprecated. Use FILAMENT_WIDTH_SENSOR instead."
+  #error "FILAMENT_SENSOR is now FILAMENT_WIDTH_SENSOR. Please update your configuration."
+#elif defined(ENDSTOPPULLUP_FIL_RUNOUT)
+  #error "ENDSTOPPULLUP_FIL_RUNOUT is now FIL_RUNOUT_PULLUP. Please update your configuration."
 #elif defined(DISABLE_MAX_ENDSTOPS) || defined(DISABLE_MIN_ENDSTOPS)
   #error "DISABLE_MAX_ENDSTOPS and DISABLE_MIN_ENDSTOPS deprecated. Use individual USE_*_PLUG options instead."
 #elif defined(LANGUAGE_INCLUDE)
@@ -323,12 +325,41 @@ static_assert(X_MAX_LENGTH >= X_BED_SIZE && Y_MAX_LENGTH >= Y_BED_SIZE,
   #endif
 #endif
 
+#if !defined(TARGET_LPC1768) && ( \
+     ENABLED(ENDSTOPPULLDOWNS) \
+  || ENABLED(ENDSTOPPULLDOWN_XMAX) \
+  || ENABLED(ENDSTOPPULLDOWN_YMAX) \
+  || ENABLED(ENDSTOPPULLDOWN_ZMAX) \
+  || ENABLED(ENDSTOPPULLDOWN_XMIN) \
+  || ENABLED(ENDSTOPPULLDOWN_YMIN) \
+  || ENABLED(ENDSTOPPULLDOWN_ZMIN) )
+  #error "PULLDOWN pin mode is not available on the selected board."
+#endif
+
+#if ENABLED(ENDSTOPPULLUPS) && ENABLED(ENDSTOPPULLDOWNS)
+  #error "Enable only one of ENDSTOPPULLUPS or ENDSTOPPULLDOWNS."
+#elif ENABLED(FIL_RUNOUT_PULLUP) && ENABLED(FIL_RUNOUT_PULLDOWN)
+  #error "Enable only one of FIL_RUNOUT_PULLUP or FIL_RUNOUT_PULLDOWN."
+#elif ENABLED(ENDSTOPPULLUP_XMAX) && ENABLED(ENDSTOPPULLDOWN_XMAX)
+  #error "Enable only one of ENDSTOPPULLUP_X_MAX or ENDSTOPPULLDOWN_X_MAX."
+#elif ENABLED(ENDSTOPPULLUP_YMAX) && ENABLED(ENDSTOPPULLDOWN_YMAX)
+  #error "Enable only one of ENDSTOPPULLUP_Y_MAX or ENDSTOPPULLDOWN_Y_MAX."
+#elif ENABLED(ENDSTOPPULLUP_ZMAX) && ENABLED(ENDSTOPPULLDOWN_ZMAX)
+  #error "Enable only one of ENDSTOPPULLUP_Z_MAX or ENDSTOPPULLDOWN_Z_MAX."
+#elif ENABLED(ENDSTOPPULLUP_XMIN) && ENABLED(ENDSTOPPULLDOWN_XMIN)
+  #error "Enable only one of ENDSTOPPULLUP_X_MIN or ENDSTOPPULLDOWN_X_MIN."
+#elif ENABLED(ENDSTOPPULLUP_YMIN) && ENABLED(ENDSTOPPULLDOWN_YMIN)
+  #error "Enable only one of ENDSTOPPULLUP_Y_MIN or ENDSTOPPULLDOWN_Y_MIN."
+#elif ENABLED(ENDSTOPPULLUP_ZMIN) && ENABLED(ENDSTOPPULLDOWN_ZMIN)
+  #error "Enable only one of ENDSTOPPULLUP_Z_MIN or ENDSTOPPULLDOWN_Z_MIN."
+#endif
+
 /**
  * Progress Bar
  */
 #if ENABLED(LCD_PROGRESS_BAR)
-  #if DISABLED(SDSUPPORT)
-    #error "LCD_PROGRESS_BAR requires SDSUPPORT."
+  #if DISABLED(SDSUPPORT) && DISABLED(LCD_SET_PROGRESS_MANUALLY)
+    #error "LCD_PROGRESS_BAR requires SDSUPPORT or LCD_SET_PROGRESS_MANUALLY."
   #elif DISABLED(ULTRA_LCD)
     #error "LCD_PROGRESS_BAR requires a character LCD."
   #elif ENABLED(DOGLCD)
@@ -621,9 +652,7 @@ static_assert(1 >= 0
  * Delta requirements
  */
 #if ENABLED(DELTA)
-  #if HAS_BED_PROBE && ENABLED(Z_MIN_PROBE_ENDSTOP)
-    #error "Delta probably shouldn't use Z_MIN_PROBE_ENDSTOP. Comment out this line to continue."
-  #elif DISABLED(USE_XMAX_PLUG) && DISABLED(USE_YMAX_PLUG) && DISABLED(USE_ZMAX_PLUG)
+  #if DISABLED(USE_XMAX_PLUG) && DISABLED(USE_YMAX_PLUG) && DISABLED(USE_ZMAX_PLUG)
     #error "You probably want to use Max Endstops for DELTA!"
   #elif ENABLED(ENABLE_LEVELING_FADE_HEIGHT) && DISABLED(AUTO_BED_LEVELING_BILINEAR) && !UBL_SEGMENTED
     #error "ENABLE_LEVELING_FADE_HEIGHT on DELTA requires AUTO_BED_LEVELING_BILINEAR or AUTO_BED_LEVELING_UBL."
@@ -888,10 +917,18 @@ static_assert(1 >= 0
 #endif
 
 /**
- * Homing Bump
+ * Homing
  */
 #if X_HOME_BUMP_MM < 0 || Y_HOME_BUMP_MM < 0 || Z_HOME_BUMP_MM < 0
   #error "[XYZ]_HOME_BUMP_MM must be greater than or equal to 0."
+#endif
+
+#if ENABLED(CODEPENDENT_XY_HOMING)
+  #if ENABLED(QUICK_HOME)
+    #error "QUICK_HOME is incompatible with CODEPENDENT_XY_HOMING."
+  #elif IS_KINEMATIC
+    #error "CODEPENDENT_XY_HOMING requires a Cartesian setup."
+  #endif
 #endif
 
 /**

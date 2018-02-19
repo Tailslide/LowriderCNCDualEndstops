@@ -219,8 +219,10 @@ void setup_killpin() {
 #if ENABLED(FILAMENT_RUNOUT_SENSOR)
 
   void setup_filrunoutpin() {
-    #if ENABLED(ENDSTOPPULLUP_FIL_RUNOUT)
+    #if ENABLED(FIL_RUNOUT_PULLUP)
       SET_INPUT_PULLUP(FIL_RUNOUT_PIN);
+    #elif ENABLED(FIL_RUNOUT_PULLDOWN)
+      SET_INPUT_PULLDOWN(FIL_RUNOUT_PIN);
     #else
       SET_INPUT(FIL_RUNOUT_PIN);
     #endif
@@ -834,6 +836,7 @@ void setup() {
   #endif
 
   lcd_init();
+  LCD_MESSAGEPGM(WELCOME_MSG);
 
   #if ENABLED(SHOW_BOOTSCREEN)
     lcd_bootscreen();
