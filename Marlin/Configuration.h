@@ -580,7 +580,7 @@
  * Override with M201
  *                                      X, Y, Z, E0 [, E1[, E2[, E3[, E4]]]]
  */
-#define DEFAULT_MAX_ACCELERATION      { 2000, 2000, 5000, 5000 }
+#define DEFAULT_MAX_ACCELERATION      { 2000, 2000, 3000, 3000 }
 
 /**
  * Default Acceleration (change/s) change = mm/s
@@ -605,7 +605,7 @@
 #define DEFAULT_XJERK                  5
 #define DEFAULT_YJERK                  5
 #define DEFAULT_ZJERK                  0.2
-#define DEFAULT_EJERK                  5.0
+#define DEFAULT_EJERK                  3.0
 
 //===========================================================================
 //============================= Z Probe Options =============================
