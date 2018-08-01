@@ -154,8 +154,8 @@
 //
 // M3/M4/M5 - Spindle/Laser Control
 //
-#define SPINDLE_LASER_PWM_PIN    45   // MUST BE HARDWARE PWM
-#define SPINDLE_LASER_ENABLE_PIN 31   // Pin should have a pullup!
+#define SPINDLE_LASER_PWM_PIN    45
+#define SPINDLE_LASER_ENABLE_PIN 31
 #define SPINDLE_DIR_PIN          32
 
 //
@@ -163,7 +163,7 @@
 //
 #define E_MUX0_PIN         17
 #define E_MUX1_PIN         16
-#define E_MUX2_PIN         84   // 84 in MK2 Firmware
+#define E_MUX2_PIN         84
 
 //
 // LCD / Controller
@@ -195,14 +195,14 @@
       #define BTN_EN2      84
       #define BTN_ENC      83
 
-      #define SD_DETECT_PIN -1   // Pin 72 if using easy adapter board
+      #define SD_DETECT_PIN -1
 
       #define STAT_LED_RED_PIN 22
       #define STAT_LED_BLUE_PIN 32
 
     #else // !VIKI2 && !miniVIKI
 
-      #define BEEPER_PIN   79   // AUX-4
+      #define BEEPER_PIN   79
 
       // AUX-2
       #define BTN_EN1      76
