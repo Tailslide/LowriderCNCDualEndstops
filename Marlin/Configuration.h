@@ -105,7 +105,7 @@
  *
  * :[-1, 0, 1, 2, 3, 4, 5, 6, 7]
  */
-#define SERIAL_PORT 0
+#define SERIAL_PORT -1
 
 /**
  * Select a secondary serial port on the board to use for communication with the host.
@@ -155,6 +155,19 @@
 
 // For Cyclops or any "multi-extruder" that shares a single nozzle.
 //#define SINGLENOZZLE
+#if ENABLED(SINGLENOZZLE)
+  // Parameters for filament retract / prime on toolchange
+  #define SINGLENOZZLE_SWAP_LENGTH          12  // (mm)
+  #define SINGLENOZZLE_SWAP_RETRACT_SPEED 3600  // (mm/m)
+  #define SINGLENOZZLE_SWAP_PRIME_SPEED   3600  // (mm/m)
+  //#define SINGLENOZZLE_SWAP_PARK
+  #if ENABLED(SINGLENOZZLE_SWAP_PARK)
+    #define SINGLENOZZLE_TOOLCHANGE_POSITION { (X_MIN_POS + 10), (Y_MIN_POS + 10), 5 }
+    #define SINGLENOZZLE_PARK_XY_FEEDRATE 6000 // (mm/m)
+  #else
+    #define SINGLENOZZLE_TOOLCHANGE_ZRAISE 2.0
+  #endif
+#endif
 
 /**
  * Průša MK2 Single Nozzle Multi-Material Multiplexer, and variants.

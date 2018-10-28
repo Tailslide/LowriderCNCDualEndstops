@@ -2415,13 +2415,13 @@ void Stepper::report_positions() {
   void Stepper::refresh_motor_power() {
     for (uint8_t i = 0; i < COUNT(motor_current_setting); ++i) {
       switch (i) {
-        #if PIN_EXISTS(MOTOR_CURRENT_PWM_XY)
+        #if PIN_EXISTS(MOTOR_CURRENT_PWM_XY) || PIN_EXISTS(MOTOR_CURRENT_PWM_X) || PIN_EXISTS(MOTOR_CURRENT_PWM_Y)
           case 0:
         #endif
         #if PIN_EXISTS(MOTOR_CURRENT_PWM_Z)
           case 1:
         #endif
-        #if PIN_EXISTS(MOTOR_CURRENT_PWM_E)
+        #if PIN_EXISTS(MOTOR_CURRENT_PWM_E) || PIN_EXISTS(MOTOR_CURRENT_PWM_E0) || PIN_EXISTS(MOTOR_CURRENT_PWM_E1)
           case 2:
         #endif
             digipot_current(i, motor_current_setting[i]);
@@ -2434,7 +2434,7 @@ void Stepper::report_positions() {
 
 #if HAS_DIGIPOTSS || HAS_MOTOR_CURRENT_PWM
 
-  void Stepper::digipot_current(const uint8_t driver, const int current) {
+  void Stepper::digipot_current(const uint8_t driver, const int16_t current) {
 
     #if HAS_DIGIPOTSS
 
@@ -2448,6 +2448,9 @@ void Stepper::report_positions() {
 
       #define _WRITE_CURRENT_PWM(P) analogWrite(MOTOR_CURRENT_PWM_## P ##_PIN, 255L * current / (MOTOR_CURRENT_PWM_RANGE))
       switch (driver) {
+        #if PIN_EXISTS(MOTOR_CURRENT_PWM_X) && PIN_EXISTS(MOTOR_CURRENT_PWM_Y)
+          case 0: _WRITE_CURRENT_PWM(X); _WRITE_CURRENT_PWM(Y); break;
+        #endif
         #if PIN_EXISTS(MOTOR_CURRENT_PWM_XY)
           case 0: _WRITE_CURRENT_PWM(XY); break;
         #endif
@@ -2456,6 +2459,9 @@ void Stepper::report_positions() {
         #endif
         #if PIN_EXISTS(MOTOR_CURRENT_PWM_E)
           case 2: _WRITE_CURRENT_PWM(E); break;
+        #endif
+        #if PIN_EXISTS(MOTOR_CURRENT_PWM_E0) && PIN_EXISTS(MOTOR_CURRENT_PWM_E1)
+          case 2: _WRITE_CURRENT_PWM(E0); _WRITE_CURRENT_PWM(E1); break;
         #endif
       }
     #endif
@@ -2477,6 +2483,12 @@ void Stepper::report_positions() {
 
     #elif HAS_MOTOR_CURRENT_PWM
 
+      #if PIN_EXISTS(MOTOR_CURRENT_PWM_X)
+        SET_OUTPUT(MOTOR_CURRENT_PWM_X_PIN);
+      #endif
+      #if PIN_EXISTS(MOTOR_CURRENT_PWM_Y)
+        SET_OUTPUT(MOTOR_CURRENT_PWM_Y_PIN);
+      #endif
       #if PIN_EXISTS(MOTOR_CURRENT_PWM_XY)
         SET_OUTPUT(MOTOR_CURRENT_PWM_XY_PIN);
       #endif
@@ -2486,12 +2498,19 @@ void Stepper::report_positions() {
       #if PIN_EXISTS(MOTOR_CURRENT_PWM_E)
         SET_OUTPUT(MOTOR_CURRENT_PWM_E_PIN);
       #endif
+      #if PIN_EXISTS(MOTOR_CURRENT_PWM_E0)
+        SET_OUTPUT(MOTOR_CURRENT_PWM_E0_PIN);
+      #endif
+      #if PIN_EXISTS(MOTOR_CURRENT_PWM_E1)
+        SET_OUTPUT(MOTOR_CURRENT_PWM_E1_PIN);
+      #endif
 
       refresh_motor_power();
 
       // Set Timer5 to 31khz so the PWM of the motor power is as constant as possible. (removes a buzzing noise)
-      SET_CS5(PRESCALER_1);
-
+      #ifdef __AVR__
+        SET_CS5(PRESCALER_1);
+      #endif
     #endif
   }
 
@@ -2538,6 +2557,29 @@ void Stepper::report_positions() {
       SET_OUTPUT(E5_MS1_PIN);
       SET_OUTPUT(E5_MS2_PIN);
     #endif
+
+    //MS3 pins
+    #if PIN_EXISTS(X_MS3)
+      SET_OUTPUT(X_MS3_PIN);
+      WRITE(X_MS3_PIN,HIGH);
+    #endif
+    #if PIN_EXISTS(Y_MS3)
+      SET_OUTPUT(Y_MS3_PIN);
+      WRITE(Y_MS3_PIN,HIGH);
+    #endif
+    #if PIN_EXISTS(Z_MS3)
+      SET_OUTPUT(Z_MS3_PIN);
+      WRITE(Z_MS3_PIN,HIGH);
+    #endif
+    #if PIN_EXISTS(E0_MS3)
+      SET_OUTPUT(E0_MS3_PIN);
+      WRITE(E0_MS3_PIN,HIGH);
+    #endif
+    #if PIN_EXISTS(E1_MS3)
+      SET_OUTPUT(E1_MS3_PIN);
+      WRITE(E1_MS3_PIN,HIGH);
+    #endif
+
     static const uint8_t microstep_modes[] = MICROSTEP_MODES;
     for (uint16_t i = 0; i < COUNT(microstep_modes); i++)
       microstep_mode(i, microstep_modes[i]);
