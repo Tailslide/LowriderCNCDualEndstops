@@ -20,12 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-#ifndef _HAL_STM32F4_H
-#define _HAL_STM32F4_H
+#pragma once
 
 #define CPU_32_BIT
-#undef DEBUG_NONE
 
 #ifndef vsnprintf_P
   #define vsnprintf_P vsnprintf
@@ -110,6 +107,7 @@
   #define NUM_SERIAL 1
 #endif
 
+#undef _BV
 #define _BV(b) (1 << (b))
 
 /**
@@ -211,8 +209,8 @@ uint8_t spiRec(uint32_t chan);
  * TODO: Write all this eeprom stuff. Can emulate eeprom in flash as last resort.
  * Wire library should work for i2c eeproms.
  */
-void eeprom_write_byte(unsigned char *pos, unsigned char value);
-unsigned char eeprom_read_byte(unsigned char *pos);
+void eeprom_write_byte(uint8_t *pos, unsigned char value);
+uint8_t eeprom_read_byte(uint8_t *pos);
 void eeprom_read_block (void *__dst, const void *__src, size_t __n);
 void eeprom_update_block (const void *__src, void *__dst, size_t __n);
 
@@ -248,6 +246,5 @@ void HAL_enable_AdcFreerun(void);
 #define GET_PIN_MAP_INDEX(pin) pin
 #define PARSED_PIN_INDEX(code, dval) parser.intval(code, dval)
 
-#define JTAG_DISABLE() afio_cfg_debug_ports(AFIO_DEBUG_NONE)
-
-#endif // _HAL_STM32F4_H
+#define JTAG_DISABLE() afio_cfg_debug_ports(AFIO_DEBUG_SW_ONLY)
+#define JTAGSWD_DISABLE() afio_cfg_debug_ports(AFIO_DEBUG_NONE)

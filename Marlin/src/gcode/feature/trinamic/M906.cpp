@@ -33,11 +33,15 @@
  * Report driver currents when no axis specified
  */
 void GcodeSuite::M906() {
-  #define TMC_SAY_CURRENT(Q) tmc_get_current(stepper##Q, TMC_##Q)
+  #define TMC_SAY_CURRENT(Q) tmc_get_current(stepper##Q)
   #define TMC_SET_CURRENT(Q) tmc_set_current(stepper##Q, value)
 
   bool report = true;
-  const uint8_t index = parser.byteval('I');
+
+  #if AXIS_IS_TMC(X) || AXIS_IS_TMC(X2) || AXIS_IS_TMC(Y) || AXIS_IS_TMC(Y2) || AXIS_IS_TMC(Z) || AXIS_IS_TMC(Z2) || AXIS_IS_TMC(Z3)
+    const uint8_t index = parser.byteval('I');
+  #endif
+
   LOOP_XYZE(i) if (uint16_t value = parser.intval(axis_codes[i])) {
     report = false;
     switch (i) {
