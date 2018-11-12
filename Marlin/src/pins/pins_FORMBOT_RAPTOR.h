@@ -25,10 +25,10 @@
  */
 
 #ifndef __AVR_ATmega2560__
-  #error "Oops!  Make sure you have 'Arduino Mega' selected from the 'Tools -> Boards' menu."
+  #error "Oops! Select 'Arduino/Genuino Mega or Mega 2560' in 'Tools > Board.'"
 #endif
 
-#if E_STEPPERS > 3 || HOTENDS > 3
+#if HOTENDS > 3 || E_STEPPERS > 3
   #error "Formbot supports up to 3 hotends / E-steppers. Comment this line to keep going."
 #endif
 

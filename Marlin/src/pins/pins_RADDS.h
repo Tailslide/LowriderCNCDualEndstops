@@ -25,7 +25,7 @@
  */
 
 #ifndef __SAM3X8E__
-  #error "Oops!  Make sure you have 'Arduino Due' selected from the 'Tools -> Boards' menu."
+  #error "Oops! Select 'Arduino Due' in 'Tools > Board.'"
 #endif
 
 #define BOARD_NAME         "RADDS"
@@ -131,7 +131,6 @@
 
     #define RADDS_EXT_MSI_PIN 69
 
-    #define MAX_EXTRUDERS 6
     #define BOARD_INIT() OUT_WRITE(RADDS_EXT_VDD_PIN, HIGH)
 
   #else
