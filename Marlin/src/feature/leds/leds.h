@@ -115,12 +115,12 @@ typedef struct LEDColor {
  * Color helpers and presets
  */
 #if HAS_WHITE_LED
-  #define LEDColorWhite() LEDColor(0, 0, 0, 255)
   #if ENABLED(NEOPIXEL_LED)
     #define MakeLEDColor(R,G,B,W,I) LEDColor(R, G, B, W, I)
   #else
     #define MakeLEDColor(R,G,B,W,I) LEDColor(R, G, B, W)
   #endif
+  #define LEDColorWhite() LEDColor(0, 0, 0, 255)
 #else
   #define MakeLEDColor(R,G,B,W,I) LEDColor(R, G, B)
   #define LEDColorWhite() LEDColor(255, 255, 255)
@@ -146,7 +146,7 @@ public:
     #endif
   );
 
-  FORCE_INLINE void set_color(uint8_t r, uint8_t g, uint8_t b
+  inline void set_color(uint8_t r, uint8_t g, uint8_t b
     #if HAS_WHITE_LED
       , uint8_t w=0
       #if ENABLED(NEOPIXEL_LED)
@@ -164,26 +164,32 @@ public:
     );
   }
 
-  static void set_white();
-  FORCE_INLINE static void set_off()   { set_color(LEDColorOff()); }
-  FORCE_INLINE static void set_green() { set_color(LEDColorGreen()); }
+  static inline void set_off()   { set_color(LEDColorOff()); }
+  static inline void set_green() { set_color(LEDColorGreen()); }
+  static inline void set_white() { set_color(LEDColorWhite()); }
 
   #if ENABLED(LED_COLOR_PRESETS)
     static const LEDColor defaultLEDColor;
-    FORCE_INLINE static void set_default()  { set_color(defaultLEDColor); }
-    FORCE_INLINE static void set_red()      { set_color(LEDColorRed()); }
-    FORCE_INLINE static void set_orange()   { set_color(LEDColorOrange()); }
-    FORCE_INLINE static void set_yellow()   { set_color(LEDColorYellow()); }
-    FORCE_INLINE static void set_blue()     { set_color(LEDColorBlue()); }
-    FORCE_INLINE static void set_indigo()   { set_color(LEDColorIndigo()); }
-    FORCE_INLINE static void set_violet()   { set_color(LEDColorViolet()); }
+    static inline void set_default()  { set_color(defaultLEDColor); }
+    static inline void set_red()      { set_color(LEDColorRed()); }
+    static inline void set_orange()   { set_color(LEDColorOrange()); }
+    static inline void set_yellow()   { set_color(LEDColorYellow()); }
+    static inline void set_blue()     { set_color(LEDColorBlue()); }
+    static inline void set_indigo()   { set_color(LEDColorIndigo()); }
+    static inline void set_violet()   { set_color(LEDColorViolet()); }
   #endif
 
-  #if ENABLED(LED_CONTROL_MENU)
+  #if ENABLED(PRINTER_EVENT_LEDS)
+    static inline LEDColor get_color() { return lights_on ? color : LEDColorOff(); }
+  #endif
+
+  #if ENABLED(LED_CONTROL_MENU) || ENABLED(PRINTER_EVENT_LEDS)
     static LEDColor color; // last non-off color
     static bool lights_on; // the last set color was "on"
+  #endif
+  #if ENABLED(LED_CONTROL_MENU)
     static void toggle();  // swap "off" with color
-    FORCE_INLINE static void update() { set_color(color); }
+    static inline void update() { set_color(color); }
   #endif
 };
 

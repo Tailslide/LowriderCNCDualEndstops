@@ -34,7 +34,8 @@
    */
   void GcodeSuite::M200() {
 
-    if (get_target_extruder_from_command()) return;
+    const int8_t target_extruder = get_target_extruder_from_command();
+    if (target_extruder < 0) return;
 
     if (parser.seen('D')) {
       // setting any extruder filament size disables volumetric on the assumption that
@@ -55,11 +56,12 @@
  */
 void GcodeSuite::M201() {
 
-  GET_TARGET_EXTRUDER();
+  const int8_t target_extruder = get_target_extruder_from_command();
+  if (target_extruder < 0) return;
 
   LOOP_XYZE(i) {
     if (parser.seen(axis_codes[i])) {
-      const uint8_t a = i + (i == E_AXIS ? TARGET_EXTRUDER : 0);
+      const uint8_t a = (i == E_AXIS ? E_AXIS_N(target_extruder) : i);
       planner.settings.max_acceleration_mm_per_s2[a] = parser.value_axis_units((AxisEnum)a);
     }
   }
@@ -74,11 +76,12 @@ void GcodeSuite::M201() {
  */
 void GcodeSuite::M203() {
 
-  GET_TARGET_EXTRUDER();
+  const int8_t target_extruder = get_target_extruder_from_command();
+  if (target_extruder < 0) return;
 
   LOOP_XYZE(i)
     if (parser.seen(axis_codes[i])) {
-      const uint8_t a = i + (i == E_AXIS ? TARGET_EXTRUDER : 0);
+      const uint8_t a = (i == E_AXIS ? E_AXIS_N(target_extruder) : i);
       planner.settings.max_feedrate_mm_s[a] = parser.value_axis_units((AxisEnum)a);
     }
 }
@@ -91,27 +94,18 @@ void GcodeSuite::M203() {
  *    T = Travel (non printing) moves
  */
 void GcodeSuite::M204() {
-  bool report = true;
-  if (parser.seenval('S')) { // Kept for legacy compatibility. Should NOT BE USED for new developments.
-    planner.settings.travel_acceleration = planner.settings.acceleration = parser.value_linear_units();
-    report = false;
-  }
-  if (parser.seenval('P')) {
-    planner.settings.acceleration = parser.value_linear_units();
-    report = false;
-  }
-  if (parser.seenval('R')) {
-    planner.settings.retract_acceleration = parser.value_linear_units();
-    report = false;
-  }
-  if (parser.seenval('T')) {
-    planner.settings.travel_acceleration = parser.value_linear_units();
-    report = false;
-  }
-  if (report) {
+  if (!parser.seen("PRST")) {
     SERIAL_ECHOPAIR("Acceleration: P", planner.settings.acceleration);
     SERIAL_ECHOPAIR(" R", planner.settings.retract_acceleration);
     SERIAL_ECHOLNPAIR(" T", planner.settings.travel_acceleration);
+  }
+  else {
+    //planner.synchronize();
+    // 'S' for legacy compatibility. Should NOT BE USED for new development
+    if (parser.seenval('S')) planner.settings.travel_acceleration = planner.settings.acceleration = parser.value_linear_units();
+    if (parser.seenval('P')) planner.settings.acceleration = parser.value_linear_units();
+    if (parser.seenval('R')) planner.settings.retract_acceleration = parser.value_linear_units();
+    if (parser.seenval('T')) planner.settings.travel_acceleration = parser.value_linear_units();
   }
 }
 
@@ -128,6 +122,19 @@ void GcodeSuite::M204() {
  *    J = Junction Deviation (mm) (Requires JUNCTION_DEVIATION)
  */
 void GcodeSuite::M205() {
+  #if ENABLED(JUNCTION_DEVIATION)
+    #define J_PARAM  "J"
+  #else
+    #define J_PARAM
+  #endif
+  #if HAS_CLASSIC_JERK
+    #define XYZE_PARAM "XYZE"
+  #else
+    #define XYZE_PARAM
+  #endif
+  if (!parser.seen("BST" J_PARAM XYZE_PARAM)) return;
+
+  //planner.synchronize();
   if (parser.seen('B')) planner.settings.min_segment_time_us = parser.value_ulong();
   if (parser.seen('S')) planner.settings.min_feedrate_mm_s = parser.value_linear_units();
   if (parser.seen('T')) planner.settings.min_travel_feedrate_mm_s = parser.value_linear_units();

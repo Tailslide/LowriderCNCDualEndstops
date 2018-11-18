@@ -141,9 +141,6 @@ float Planner::steps_to_mm[XYZE_N];           // (mm) Millimeters per step
 
 #if ENABLED(DISTINCT_E_FACTORS)
   uint8_t Planner::last_extruder = 0;     // Respond to extruder change
-  #define _EINDEX (E_AXIS + active_extruder)
-#else
-  #define _EINDEX E_AXIS
 #endif
 
 int16_t Planner::flow_percentage[EXTRUDERS] = ARRAY_BY_EXTRUDERS1(100); // Extrusion factor for each extruder
@@ -358,11 +355,11 @@ void Planner::init() {
       // For small divisors, it is best to directly retrieve the results
       if (d <= 110) return pgm_read_dword(&small_inv_tab[d]);
 
-      register uint8_t r8 = d & 0xFF,
-                       r9 = (d >> 8) & 0xFF,
-                       r10 = (d >> 16) & 0xFF,
-                       r2,r3,r4,r5,r6,r7,r11,r12,r13,r14,r15,r16,r17,r18;
-      register const uint8_t* ptab = inv_tab;
+      uint8_t r8 = d & 0xFF,
+              r9 = (d >> 8) & 0xFF,
+              r10 = (d >> 16) & 0xFF,
+              r2,r3,r4,r5,r6,r7,r11,r12,r13,r14,r15,r16,r17,r18;
+      const uint8_t* ptab = inv_tab;
 
       __asm__ __volatile__(
         // %8:%7:%6 = interval
@@ -2696,7 +2693,7 @@ void Planner::set_machine_position_mm(const float &a, const float &b, const floa
   position[A_AXIS] = LROUND(a * settings.axis_steps_per_mm[A_AXIS]);
   position[B_AXIS] = LROUND(b * settings.axis_steps_per_mm[B_AXIS]);
   position[C_AXIS] = LROUND(c * settings.axis_steps_per_mm[C_AXIS]);
-  position[E_AXIS] = LROUND(e * settings.axis_steps_per_mm[_EINDEX]);
+  position[E_AXIS] = LROUND(e * settings.axis_steps_per_mm[E_AXIS_N(active_extruder)]);
   #if HAS_POSITION_FLOAT
     position_float[A_AXIS] = a;
     position_float[B_AXIS] = b;
@@ -2738,11 +2735,9 @@ void Planner::set_position_mm(const float &rx, const float &ry, const float &rz,
  * Setters for planner position (also setting stepper position).
  */
 void Planner::set_e_position_mm(const float &e) {
+  const uint8_t axis_index = E_AXIS_N(active_extruder);
   #if ENABLED(DISTINCT_E_FACTORS)
-    const uint8_t axis_index = E_AXIS + active_extruder;
     last_extruder = active_extruder;
-  #else
-    const uint8_t axis_index = E_AXIS;
   #endif
   #if ENABLED(FWRETRACT)
     float e_new = e - fwretract.current_retract[active_extruder];
@@ -2765,7 +2760,7 @@ void Planner::set_e_position_mm(const float &e) {
 // Recalculate the steps/s^2 acceleration rates, based on the mm/s^2
 void Planner::reset_acceleration_rates() {
   #if ENABLED(DISTINCT_E_FACTORS)
-    #define AXIS_CONDITION (i < E_AXIS || i == E_AXIS + active_extruder)
+    #define AXIS_CONDITION (i < E_AXIS || i == E_AXIS_N(active_extruder))
   #else
     #define AXIS_CONDITION true
   #endif

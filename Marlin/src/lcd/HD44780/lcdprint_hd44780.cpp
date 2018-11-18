@@ -1,5 +1,5 @@
 /**
- * @file    lcdprint_hd44780.c
+ * @file    lcdprint_hd44780.cpp
  * @brief   LCD print api for HD44780
  * @author  Yunhui Fu (yhfudev@gmail.com)
  * @version 1.0
@@ -12,19 +12,17 @@
  *   Western(English), Cyrillic(Russian), Kana(Japanese) charsets.
  */
 
-#include "../inc/MarlinConfigPre.h"
-#include "../inc/MarlinConfig.h"
+#include "../../inc/MarlinConfigPre.h"
 
-#if ENABLED(ULTRA_LCD)
-#include "ultralcd.h"
-#include "../Marlin.h"
+#if HAS_CHARACTER_LCD
 
-#if DISABLED(DOGLCD)
+#include "../ultralcd.h"
+#include "../../Marlin.h"
+
+#include "ultralcd_HD44780.h"
+
 #include <string.h>
-#include "fontutils.h"
-#include "lcdprint.h"
 
-#include "ultralcd_common_HD44780.h"
 #ifndef LCD_CLASS
   #include <LiquidCrystal.h>
   #define LCD_CLASS LiquidCrystal
@@ -34,14 +32,13 @@ LCD_CLASS *plcd = &lcd;
 
 int lcd_glyph_height(void) { return 1; }
 
-////////////////////////////////////////////////////////////
 typedef struct _hd44780_charmap_t {
   wchar_t uchar; // the unicode char
   uint8_t idx;   // the glyph of the char in the ROM
   uint8_t idx2;  // the char used to be combined with the idx to simulate a single char
 } hd44780_charmap_t;
 
-#if defined(__AVR__)
+#ifdef __AVR__
   #define IV(a) U##a
 #else
   #define IV(a) L##a
@@ -1040,5 +1037,4 @@ int lcd_put_u8str_max_P(PGM_P utf8_str_P, pixel_len_t max_length) {
   return lcd_put_u8str_max_cb(utf8_str_P, read_byte_rom, max_length);
 }
 
-#endif // DOGLCD
-#endif // ULTRA_LCD
+#endif // HAS_CHARACTER_LCD
