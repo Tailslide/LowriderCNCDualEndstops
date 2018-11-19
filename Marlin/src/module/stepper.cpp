@@ -2413,7 +2413,7 @@ void Stepper::report_positions() {
         #if PIN_EXISTS(MOTOR_CURRENT_PWM_Z)
           case 1:
         #endif
-        #if PIN_EXISTS(MOTOR_CURRENT_PWM_E) || PIN_EXISTS(MOTOR_CURRENT_PWM_E0) || PIN_EXISTS(MOTOR_CURRENT_PWM_E1)
+        #if PIN_EXISTS(MOTOR_CURRENT_PWM_E) || PIN_EXISTS(MOTOR_CURRENT_PWM_E0) || PIN_EXISTS(MOTOR_CURRENT_PWM_E1) || PIN_EXISTS(MOTOR_CURRENT_PWM_E2)
           case 2:
         #endif
             digipot_current(i, motor_current_setting[i]);
@@ -2466,6 +2466,9 @@ void Stepper::report_positions() {
           #if PIN_EXISTS(MOTOR_CURRENT_PWM_E1)
             _WRITE_CURRENT_PWM(E1);
           #endif
+          #if PIN_EXISTS(MOTOR_CURRENT_PWM_E2)
+            _WRITE_CURRENT_PWM(E2);
+          #endif
           break;
       }
     #endif
@@ -2507,6 +2510,9 @@ void Stepper::report_positions() {
       #endif
       #if PIN_EXISTS(MOTOR_CURRENT_PWM_E1)
         SET_OUTPUT(MOTOR_CURRENT_PWM_E1_PIN);
+      #endif
+      #if PIN_EXISTS(MOTOR_CURRENT_PWM_E2)
+        SET_OUTPUT(MOTOR_CURRENT_PWM_E2_PIN);
       #endif
 
       refresh_motor_power();

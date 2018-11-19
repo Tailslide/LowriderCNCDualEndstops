@@ -93,13 +93,17 @@
 #define Z_DIR_PIN         107   // PB10 DIR Z *
 #define Z_ENABLE_PIN       96   // PC10 EN Z -AddOns *
 
-#define E0_STEP_PIN        78   // PB23 STEP3 *
-#define E0_DIR_PIN         22   // PB26 DIR3 *
-#define E0_ENABLE_PIN      97   // PB24 EN3 -Addons *
+#define E0_STEP_PIN        93   // PB23 STEP3 * DUAL
+#define E0_DIR_PIN         94   // PB26 DIR3 * DUAL
+#define E0_ENABLE_PIN      95   // PB24 EN3 -Addons * DUAL
 
-#define E1_STEP_PIN        26   // PD1 STEP4 *
-#define E1_DIR_PIN         27   // PD2 DIR4 *
-#define E1_ENABLE_PIN      28   // PD3 EN4 *
+#define E1_STEP_PIN        78   // PB23 STEP3 * DUAL
+#define E1_DIR_PIN         22   // PB26 DIR3 * DUAL
+#define E1_ENABLE_PIN      97   // PB24 EN3 -Addons * DUAL
+
+#define E2_STEP_PIN        26   // PD1 STEP4 * DUAL
+#define E2_DIR_PIN         27   // PD2 DIR4 * DUAL
+#define E2_ENABLE_PIN      28   // PD3 EN4 * DUAL
 
 // Microstepping mode pins *
 #define X_MS1_PIN          39   // PC7 MOD0E1 - As listed in schematic
@@ -114,20 +118,25 @@
 #define Z_MS2_PIN          45   // PC18 MOD1E Z
 #define Z_MS3_PIN          46   // PC17 MOD2E Z
 
-#define E0_MS1_PIN        105   // PB22 MOD0E3 - AddOns
-#define E0_MS2_PIN        106   // PC27 MOD1E3 - AddOns
-#define E0_MS3_PIN        104   // PC20 MOD2E3 - AddOns
+#define E0_MS1_PIN        73   // PB22 MOD0E3 - AddOns
+#define E0_MS2_PIN        74   // PC27 MOD1E3 - AddOns
+#define E0_MS3_PIN        75   // PC20 MOD2E3 - AddOns
 
-#define E1_MS1_PIN         25   // PD0 MOD0E4
-#define E1_MS2_PIN         18   // PA11 MOD1E4
-#define E1_MS3_PIN         19   // PA10 MOD2E4
+#define E1_MS1_PIN        105   // PB22 MOD0E3 - AddOns DUAL
+#define E1_MS2_PIN        106   // PC27 MOD1E3 - AddOns DUAL
+#define E1_MS3_PIN        104   // PC20 MOD2E3 - AddOns DUAL
+
+#define E2_MS1_PIN         25   // PD0 MOD0E4 DUAL
+#define E2_MS2_PIN         18   // PA11 MOD1E4 DUAL
+#define E2_MS3_PIN         19   // PA10 MOD2E4 DUAL
 
 // Motor current PWM pins *
 #define MOTOR_CURRENT_PWM_X_PIN   58   // PA6   X-REF TIOB2
 #define MOTOR_CURRENT_PWM_Y_PIN   12   // PD8   Y-REF TIOB8
 #define MOTOR_CURRENT_PWM_Z_PIN   10   // PC29  Z-REF TIOB7
-#define MOTOR_CURRENT_PWM_E0_PIN   3   // PC28 E1-REF TIOA7
-#define MOTOR_CURRENT_PWM_E1_PIN  11   // PD7  E2-REF TIOA8
+#define MOTOR_CURRENT_PWM_E0_PIN   76   // PC28 E1-REF TIOA7 DUAL
+#define MOTOR_CURRENT_PWM_E1_PIN   3   // PC28 E1-REF TIOA7 DUAL
+#define MOTOR_CURRENT_PWM_E2_PIN  11   // PD7  E2-REF TIOA8 DUAL
 
 #define MOTOR_CURRENT_PWM_RANGE 2750   // (3.3 Volts * 100000 Ohms) / (100000 Ohms + 20000 Ohms) = 2.75 Volts (max vref)
 #define DEFAULT_PWM_MOTOR_CURRENT  { 1000, 1000, 1000 } //, 1000, 1000}   // X Y Z E0 E1, 1000 = 1000mAh
