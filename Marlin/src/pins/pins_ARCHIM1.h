@@ -93,9 +93,9 @@
 #define Z_DIR_PIN         107   // PB10 DIR Z *
 #define Z_ENABLE_PIN       96   // PC10 EN Z -AddOns *
 
-#define E0_STEP_PIN        93   // PB23 STEP3 * DUAL
-#define E0_DIR_PIN         94   // PB26 DIR3 * DUAL
-#define E0_ENABLE_PIN      95   // PB24 EN3 -Addons * DUAL
+#define E0_STEP_PIN        100   // PB23 STEP3 * DUAL
+#define E0_DIR_PIN         99   // PB26 DIR3 * DUAL
+#define E0_ENABLE_PIN      101   // PB24 EN3 -Addons * DUAL
 
 #define E1_STEP_PIN        78   // PB23 STEP3 * DUAL
 #define E1_DIR_PIN         22   // PB26 DIR3 * DUAL
@@ -118,9 +118,9 @@
 #define Z_MS2_PIN          45   // PC18 MOD1E Z
 #define Z_MS3_PIN          46   // PC17 MOD2E Z
 
-#define E0_MS1_PIN        73   // PB22 MOD0E3 - AddOns
-#define E0_MS2_PIN        74   // PC27 MOD1E3 - AddOns
-#define E0_MS3_PIN        75   // PC20 MOD2E3 - AddOns
+#define E0_MS1_PIN        98   // PB22 MOD0E3 - AddOns
+#define E0_MS2_PIN        102  // PC27 MOD1E3 - AddOns
+#define E0_MS3_PIN        103   // PC20 MOD2E3 - AddOns
 
 #define E1_MS1_PIN        105   // PB22 MOD0E3 - AddOns DUAL
 #define E1_MS2_PIN        106   // PC27 MOD1E3 - AddOns DUAL
@@ -134,7 +134,7 @@
 #define MOTOR_CURRENT_PWM_X_PIN   58   // PA6   X-REF TIOB2
 #define MOTOR_CURRENT_PWM_Y_PIN   12   // PD8   Y-REF TIOB8
 #define MOTOR_CURRENT_PWM_Z_PIN   10   // PC29  Z-REF TIOB7
-#define MOTOR_CURRENT_PWM_E0_PIN   76   // PC28 E1-REF TIOA7 DUAL
+#define MOTOR_CURRENT_PWM_E0_PIN   85   // PC28 E1-REF TIOA7 DUAL
 #define MOTOR_CURRENT_PWM_E1_PIN   3   // PC28 E1-REF TIOA7 DUAL
 #define MOTOR_CURRENT_PWM_E2_PIN  11   // PD7  E2-REF TIOA8 DUAL
 
