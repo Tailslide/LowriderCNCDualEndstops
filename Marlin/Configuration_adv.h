@@ -496,7 +496,7 @@
  * vibration and surface artifacts. The algorithm adapts to provide the best possible step smoothing at the
  * lowest stepping frequencies.
  */
-//#define ADAPTIVE_STEP_SMOOTHING
+#define ADAPTIVE_STEP_SMOOTHING
 
 /**
  * Custom Microstepping
@@ -533,7 +533,7 @@
  *    M909, M910 & LCD - only PRINTRBOARD_REVF & RIGIDBOARD_V2
  */
 //#define PWM_MOTOR_CURRENT { 1300, 1300, 1250 }          // Values in milliamps
-#define DIGIPOT_MOTOR_CURRENT { 95, 95, 95, 95, 95 }   // Values 0-255 (RAMBO 135 = ~0.75A, 185 = ~1A)
+#define DIGIPOT_MOTOR_CURRENT { 120, 120, 120, 120, 120 }   // Values 0-255 (RAMBO 135 = ~0.75A, 185 = ~1A)
 //#define DAC_MOTOR_CURRENT_DEFAULT { 70, 80, 90, 80 }    // Default drive percent - X, Y, Z, E axis
 
 // Use an I2C based DIGIPOT (e.g., Azteeg X3 Pro)
