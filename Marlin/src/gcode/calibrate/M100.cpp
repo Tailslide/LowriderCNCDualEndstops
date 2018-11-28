@@ -50,8 +50,8 @@
  *
  * Also, there are two support functions that can be called from a developer's C code.
  *
- *    uint16_t check_for_free_memory_corruption(const char * const ptr);
- *    void M100_dump_routine(const char * const title, const char *start, const char *end);
+ *    uint16_t check_for_free_memory_corruption(PGM_P const ptr);
+ *    void M100_dump_routine(PGM_P const title, const char *start, const char *end);
  *
  * Initial version by Roxy-3D
  */
@@ -80,7 +80,7 @@ char* top_of_stack() {
 // Count the number of test bytes at the specified location.
 inline int32_t count_test_bytes(const char * const ptr) {
   for (uint32_t i = 0; i < 32000; i++)
-    if (((char) ptr[i]) != TEST_BYTE)
+    if (char(ptr[i]) != TEST_BYTE)
       return i - 1;
 
   return -1;
@@ -117,7 +117,7 @@ inline int32_t count_test_bytes(const char * const ptr) {
         print_hex_byte(ptr[i]);
         SERIAL_CHAR(' ');
       }
-      safe_delay(25);
+      serial_delay(25);
       SERIAL_CHAR('|');                   // Point out non test bytes
       for (uint8_t i = 0; i < 16; i++) {
         char ccc = (char)ptr[i]; // cast to char before automatically casting to char on assignment, in case the compiler is broken
@@ -131,13 +131,14 @@ inline int32_t count_test_bytes(const char * const ptr) {
       }
       SERIAL_EOL();
       ptr += 16;
-      safe_delay(25);
+      serial_delay(25);
       idle();
     }
   }
 
-  void M100_dump_routine(const char * const title, const char *start, const char *end) {
-    SERIAL_ECHOLN(title);
+  void M100_dump_routine(PGM_P const title, const char *start, const char *end) {
+    serialprintPGM(title);
+    SERIAL_EOL();
     //
     // Round the start and end locations to produce full lines of output
     //
@@ -148,8 +149,8 @@ inline int32_t count_test_bytes(const char * const ptr) {
 
 #endif // M100_FREE_MEMORY_DUMPER
 
-inline int check_for_free_memory_corruption(const char * const title) {
-  SERIAL_ECHO(title);
+inline int check_for_free_memory_corruption(PGM_P const title) {
+  serialprintPGM(title);
 
   char *ptr = END_OF_HEAP(), *sp = top_of_stack();
   int n = sp - ptr;
@@ -169,9 +170,9 @@ inline int check_for_free_memory_corruption(const char * const title) {
     // safe_delay(20);                 // boards.
     // while ( !READ(63))
     //   idle();
-    safe_delay(20);
+    serial_delay(20);
     #if ENABLED(M100_FREE_MEMORY_DUMPER)
-      M100_dump_routine("   Memory corruption detected with sp<Heap\n", (char*)0x1B80, (char*)0x21FF);
+      M100_dump_routine(PSTR("   Memory corruption detected with sp<Heap\n"), (char*)0x1B80, (char*)0x21FF);
     #endif
   }
 
@@ -239,7 +240,7 @@ inline void free_memory_pool_report(char * const ptr, const int32_t size) {
     SERIAL_ECHOPAIR("\nLargest free block is ", max_cnt);
     SERIAL_ECHOLNPAIR(" bytes at ", hex_address(max_addr));
   }
-  SERIAL_ECHOLNPAIR("check_for_free_memory_corruption() = ", check_for_free_memory_corruption("M100 F "));
+  SERIAL_ECHOLNPAIR("check_for_free_memory_corruption() = ", check_for_free_memory_corruption(PSTR("M100 F ")));
 }
 
 #if ENABLED(M100_FREE_MEMORY_CORRUPTOR)
