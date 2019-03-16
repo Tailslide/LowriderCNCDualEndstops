@@ -734,20 +734,15 @@
  * When changing speed and direction, if the difference is less than the
  * value set here, it may happen instantaneously.
  */
-<<<<<<< HEAD
-#define DEFAULT_XJERK                 3.0
-#define DEFAULT_YJERK                 3.0
-#define DEFAULT_ZJERK                  0.2
-#define DEFAULT_EJERK                  5.0
-=======
+
+
 #if DISABLED(JUNCTION_DEVIATION)
-  #define DEFAULT_XJERK 10.0
-  #define DEFAULT_YJERK 10.0
-  #define DEFAULT_ZJERK  0.3
+  #define DEFAULT_XJERK 3.0
+  #define DEFAULT_YJERK 3.0
+  #define DEFAULT_ZJERK  0.2
 #endif
 
 #define DEFAULT_EJERK    5.0  // May be used by Linear Advance
->>>>>>> upstream/bugfix-2.0.x
 
 /**
  * S-Curve Acceleration

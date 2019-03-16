@@ -75,6 +75,12 @@
 #define E1_STEP_PIN        34
 #define E1_DIR_PIN         43
 #define E1_ENABLE_PIN      26
+
+// FSIGAP trying to fix compile error
+#define E2_STEP_PIN        58
+#define E2_DIR_PIN         40
+#define E2_ENABLE_PIN      78
+
 // Microstepping pins - Mapping not from fastio.h (?)
 #define X_MS1_PIN          40
 #define X_MS2_PIN          41
