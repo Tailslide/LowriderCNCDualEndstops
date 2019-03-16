@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -184,12 +184,13 @@ void plan_arc(
     raw[q_axis] = center_Q + r_Q;
     #if ENABLED(AUTO_BED_LEVELING_UBL)
       raw[l_axis] = start_L;
+      UNUSED(linear_per_segment);
     #else
       raw[l_axis] += linear_per_segment;
     #endif
     raw[E_AXIS] += extruder_per_segment;
 
-    clamp_to_software_endstops(raw);
+    apply_motion_limits(raw);
 
     #if HAS_LEVELING && !PLANNER_LEVELING
       planner.apply_leveling(raw);
@@ -293,10 +294,9 @@ void GcodeSuite::G2_G3(const bool clockwise) {
       #if ENABLED(ARC_P_CIRCLES)
         // P indicates number of circles to do
         int8_t circles_to_do = parser.byteval('P');
-        if (!WITHIN(circles_to_do, 0, 100)) {
-          SERIAL_ERROR_START();
-          SERIAL_ERRORLNPGM(MSG_ERR_ARC_ARGS);
-        }
+        if (!WITHIN(circles_to_do, 0, 100))
+          SERIAL_ERROR_MSG(MSG_ERR_ARC_ARGS);
+
         while (circles_to_do--)
           plan_arc(current_position, arc_offset, clockwise);
       #endif
@@ -305,11 +305,8 @@ void GcodeSuite::G2_G3(const bool clockwise) {
       plan_arc(destination, arc_offset, clockwise);
       reset_stepper_timeout();
     }
-    else {
-      // Bad arguments
-      SERIAL_ERROR_START();
-      SERIAL_ERRORLNPGM(MSG_ERR_ARC_ARGS);
-    }
+    else
+      SERIAL_ERROR_MSG(MSG_ERR_ARC_ARGS);
   }
 }
 

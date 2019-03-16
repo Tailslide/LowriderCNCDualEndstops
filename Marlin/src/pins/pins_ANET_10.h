@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2017 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -89,7 +89,7 @@
  */
 
 #ifndef __AVR_ATmega1284P__
-  #error "Oops! Select 'Anet V1.0', 'Anet V1.0 (Optiboot)' or 'Sanguino' in 'Tools > Board' and 'ATmega1284P' in 'Tools > Processor.'"
+  #error "Oops! Select 'Sanguino' in 'Tools > Board' and 'ATmega1284P' in 'Tools > Processor.' (For PlatformIO, use 'melzi' or 'melzi_optiboot.')"
 #endif
 
 #define BOARD_NAME "Anet 1.0"

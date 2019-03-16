@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -49,6 +49,10 @@
 
 #define INTERSECTION_CIRCLE_RADIUS 5
 #define CROSSHAIRS_SIZE 3
+
+#ifndef G26_XY_FEEDRATE
+  #define G26_XY_FEEDRATE (PLANNER_XY_FEEDRATE() / 3.0)
+#endif
 
 #if CROSSHAIRS_SIZE >= INTERSECTION_CIRCLE_RADIUS
   #error "CROSSHAIRS_SIZE must be less than INTERSECTION_CIRCLE_RADIUS."
@@ -240,7 +244,7 @@ void move_to(const float &rx, const float &ry, const float &z, const float &e_de
 
   // Check if X or Y is involved in the movement.
   // Yes: a 'normal' movement. No: a retract() or recover()
-  feed_value = has_xy_component ? PLANNER_XY_FEEDRATE() / 3.0 : planner.settings.max_feedrate_mm_s[E_AXIS] / 1.5;
+  feed_value = has_xy_component ? G26_XY_FEEDRATE : planner.settings.max_feedrate_mm_s[E_AXIS] / 1.5;
 
   if (g26_debug_flag) SERIAL_ECHOLNPAIR("in move_to() feed_value for XY:", feed_value);
 
@@ -346,12 +350,7 @@ inline bool look_for_lines_to_connect() {
             if (position_is_reachable(sx, sy) && position_is_reachable(ex, ey)) {
 
               if (g26_debug_flag) {
-                SERIAL_ECHOPAIR(" Connecting with horizontal line (sx=", sx);
-                SERIAL_ECHOPAIR(", sy=", sy);
-                SERIAL_ECHOPAIR(") -> (ex=", ex);
-                SERIAL_ECHOPAIR(", ey=", ey);
-                SERIAL_CHAR(')');
-                SERIAL_EOL();
+                SERIAL_ECHOLNPAIR(" Connecting with horizontal line (sx=", sx, ", sy=", sy, ") -> (ex=", ex, ", ey=", ey, ")");
                 //debug_current_and_destination(PSTR("Connecting horizontal line."));
               }
               print_line_from_here_to_there(sx, sy, g26_layer_height, ex, ey, g26_layer_height);
@@ -572,8 +571,8 @@ void GcodeSuite::G26() {
 
   if (parser.seenval('B')) {
     g26_bed_temp = parser.value_celsius();
-    if (g26_bed_temp && !WITHIN(g26_bed_temp, 40, 140)) {
-      SERIAL_PROTOCOLLNPGM("?Specified bed temperature not plausible (40-140C).");
+    if (g26_bed_temp && !WITHIN(g26_bed_temp, 40, (BED_MAXTEMP - 10))) {
+      SERIAL_ECHOLNPAIR("?Specified bed temperature not plausible (40-", int(BED_MAXTEMP - 10), "C).");
       return;
     }
   }
@@ -581,7 +580,7 @@ void GcodeSuite::G26() {
   if (parser.seenval('L')) {
     g26_layer_height = parser.value_linear_units();
     if (!WITHIN(g26_layer_height, 0.0, 2.0)) {
-      SERIAL_PROTOCOLLNPGM("?Specified layer height not plausible.");
+      SERIAL_ECHOLNPGM("?Specified layer height not plausible.");
       return;
     }
   }
@@ -590,20 +589,20 @@ void GcodeSuite::G26() {
     if (parser.has_value()) {
       g26_retraction_multiplier = parser.value_float();
       if (!WITHIN(g26_retraction_multiplier, 0.05, 15.0)) {
-        SERIAL_PROTOCOLLNPGM("?Specified Retraction Multiplier not plausible.");
+        SERIAL_ECHOLNPGM("?Specified Retraction Multiplier not plausible.");
         return;
       }
     }
     else {
-      SERIAL_PROTOCOLLNPGM("?Retraction Multiplier must be specified.");
+      SERIAL_ECHOLNPGM("?Retraction Multiplier must be specified.");
       return;
     }
   }
 
   if (parser.seenval('S')) {
     g26_nozzle = parser.value_float();
-    if (!WITHIN(g26_nozzle, 0.1, 1.0)) {
-      SERIAL_PROTOCOLLNPGM("?Specified nozzle size not plausible.");
+    if (!WITHIN(g26_nozzle, 0.1, 2.0)) {
+      SERIAL_ECHOLNPGM("?Specified nozzle size not plausible.");
       return;
     }
   }
@@ -613,7 +612,7 @@ void GcodeSuite::G26() {
       #if HAS_LCD_MENU
         g26_prime_flag = -1;
       #else
-        SERIAL_PROTOCOLLNPGM("?Prime length must be specified when not using an LCD.");
+        SERIAL_ECHOLNPGM("?Prime length must be specified when not using an LCD.");
         return;
       #endif
     }
@@ -621,7 +620,7 @@ void GcodeSuite::G26() {
       g26_prime_flag++;
       g26_prime_length = parser.value_linear_units();
       if (!WITHIN(g26_prime_length, 0.0, 25.0)) {
-        SERIAL_PROTOCOLLNPGM("?Specified prime length not plausible.");
+        SERIAL_ECHOLNPGM("?Specified prime length not plausible.");
         return;
       }
     }
@@ -630,7 +629,7 @@ void GcodeSuite::G26() {
   if (parser.seenval('F')) {
     g26_filament_diameter = parser.value_linear_units();
     if (!WITHIN(g26_filament_diameter, 1.0, 4.0)) {
-      SERIAL_PROTOCOLLNPGM("?Specified filament size not plausible.");
+      SERIAL_ECHOLNPGM("?Specified filament size not plausible.");
       return;
     }
   }
@@ -642,8 +641,8 @@ void GcodeSuite::G26() {
 
   if (parser.seenval('H')) {
     g26_hotend_temp = parser.value_celsius();
-    if (!WITHIN(g26_hotend_temp, 165, 280)) {
-      SERIAL_PROTOCOLLNPGM("?Specified nozzle temperature not plausible.");
+    if (!WITHIN(g26_hotend_temp, 165, (HEATER_0_MAXTEMP - 15))) {
+      SERIAL_ECHOLNPGM("?Specified nozzle temperature not plausible.");
       return;
     }
   }
@@ -659,21 +658,21 @@ void GcodeSuite::G26() {
     g26_repeats = parser.intval('R', GRID_MAX_POINTS + 1);
   #else
     if (!parser.seen('R')) {
-      SERIAL_PROTOCOLLNPGM("?(R)epeat must be specified when not using an LCD.");
+      SERIAL_ECHOLNPGM("?(R)epeat must be specified when not using an LCD.");
       return;
     }
     else
       g26_repeats = parser.has_value() ? parser.value_int() : GRID_MAX_POINTS + 1;
   #endif
   if (g26_repeats < 1) {
-    SERIAL_PROTOCOLLNPGM("?(R)epeat value not plausible; must be at least 1.");
+    SERIAL_ECHOLNPGM("?(R)epeat value not plausible; must be at least 1.");
     return;
   }
 
   g26_x_pos = parser.seenval('X') ? RAW_X_POSITION(parser.value_linear_units()) : current_position[X_AXIS];
   g26_y_pos = parser.seenval('Y') ? RAW_Y_POSITION(parser.value_linear_units()) : current_position[Y_AXIS];
   if (!position_is_reachable(g26_x_pos, g26_y_pos)) {
-    SERIAL_PROTOCOLLNPGM("?Specified X,Y coordinate out of bounds.");
+    SERIAL_ECHOLNPGM("?Specified X,Y coordinate out of bounds.");
     return;
   }
 

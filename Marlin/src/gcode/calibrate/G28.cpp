@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -45,6 +45,13 @@
 
 #include "../../lcd/ultralcd.h"
 
+#if HAS_DRIVER(L6470)                         // set L6470 absolute position registers to counts
+  #include "../../libs/L6470/L6470_Marlin.h"
+#endif
+
+#define DEBUG_OUT ENABLED(DEBUG_LEVELING_FEATURE)
+#include "../../core/debug_out.h"
+
 #if ENABLED(QUICK_HOME)
 
   static void quick_home_xy() {
@@ -67,8 +74,15 @@
                 fr_mm_s = MIN(homing_feedrate(X_AXIS), homing_feedrate(Y_AXIS)) * SQRT(sq(mlratio) + 1.0);
 
     #if ENABLED(SENSORLESS_HOMING)
-      sensorless_homing_per_axis(X_AXIS);
-      sensorless_homing_per_axis(Y_AXIS);
+      sensorless_t stealth_states { false, false, false, false, false, false, false };
+      stealth_states.x = tmc_enable_stallguard(stepperX);
+      stealth_states.y = tmc_enable_stallguard(stepperY);
+      #if AXIS_HAS_STALLGUARD(X2)
+        stealth_states.x2 = tmc_enable_stallguard(stepperX2);
+      #endif
+      #if AXIS_HAS_STALLGUARD(Y2)
+        stealth_states.y2 = tmc_enable_stallguard(stepperY2);
+      #endif
     #endif
 
     do_blocking_move_to_xy(1.5 * mlx * x_axis_home_dir, 1.5 * mly * home_dir(Y_AXIS), fr_mm_s);
@@ -78,8 +92,14 @@
     current_position[X_AXIS] = current_position[Y_AXIS] = 0.0;
 
     #if ENABLED(SENSORLESS_HOMING)
-      sensorless_homing_per_axis(X_AXIS, false);
-      sensorless_homing_per_axis(Y_AXIS, false);
+      tmc_disable_stallguard(stepperX, stealth_states.x);
+      tmc_disable_stallguard(stepperY, stealth_states.y);
+      #if AXIS_HAS_STALLGUARD(X2)
+        tmc_disable_stallguard(stepperX2, stealth_states.x2);
+      #endif
+      #if AXIS_HAS_STALLGUARD(Y2)
+        tmc_disable_stallguard(stepperY2, stealth_states.y2);
+      #endif
     #endif
   }
 
@@ -92,14 +112,11 @@
     // Disallow Z homing if X or Y are unknown
     if (!TEST(axis_known_position, X_AXIS) || !TEST(axis_known_position, Y_AXIS)) {
       LCD_MESSAGEPGM(MSG_ERR_Z_HOMING);
-      SERIAL_ECHO_START();
-      SERIAL_ECHOLNPGM(MSG_ERR_Z_HOMING);
+      SERIAL_ECHO_MSG(MSG_ERR_Z_HOMING);
       return;
     }
 
-    #if ENABLED(DEBUG_LEVELING_FEATURE)
-      if (DEBUGGING(LEVELING)) SERIAL_ECHOLNPGM("Z_SAFE_HOMING >>>");
-    #endif
+    if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("Z_SAFE_HOMING >>>");
 
     sync_plan_position();
 
@@ -117,9 +134,7 @@
 
     if (position_is_reachable(destination[X_AXIS], destination[Y_AXIS])) {
 
-      #if ENABLED(DEBUG_LEVELING_FEATURE)
-        if (DEBUGGING(LEVELING)) DEBUG_POS("Z_SAFE_HOMING", destination);
-      #endif
+      if (DEBUGGING(LEVELING)) DEBUG_POS("Z_SAFE_HOMING", destination);
 
       // This causes the carriage on Dual X to unpark
       #if ENABLED(DUAL_X_CARRIAGE)
@@ -135,13 +150,10 @@
     }
     else {
       LCD_MESSAGEPGM(MSG_ZPROBE_OUT);
-      SERIAL_ECHO_START();
-      SERIAL_ECHOLNPGM(MSG_ZPROBE_OUT);
+      SERIAL_ECHO_MSG(MSG_ZPROBE_OUT);
     }
 
-    #if ENABLED(DEBUG_LEVELING_FEATURE)
-      if (DEBUGGING(LEVELING)) SERIAL_ECHOLNPGM("<<< Z_SAFE_HOMING");
-    #endif
+    if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("<<< Z_SAFE_HOMING");
   }
 
 #endif // Z_SAFE_HOMING
@@ -167,12 +179,10 @@
  */
 void GcodeSuite::G28(const bool always_home_all) {
 
-  #if ENABLED(DEBUG_LEVELING_FEATURE)
-    if (DEBUGGING(LEVELING)) {
-      SERIAL_ECHOLNPGM(">>> G28");
-      log_machine_info();
-    }
-  #endif
+  if (DEBUGGING(LEVELING)) {
+    DEBUG_ECHOLNPGM(">>> G28");
+    log_machine_info();
+  }
 
   #if ENABLED(DUAL_X_CARRIAGE)
     bool IDEX_saved_duplication_state = extruder_duplication_enabled;
@@ -185,9 +195,7 @@ void GcodeSuite::G28(const bool always_home_all) {
       sync_plan_position();
       SERIAL_ECHOLNPGM("Simulated Homing");
       report_current_position();
-      #if ENABLED(DEBUG_LEVELING_FEATURE)
-        if (DEBUGGING(LEVELING)) SERIAL_ECHOLNPGM("<<< G28");
-      #endif
+      if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("<<< G28");
       return;
     }
   #endif
@@ -200,12 +208,7 @@ void GcodeSuite::G28(const bool always_home_all) {
         all_axes_homed()  // homing needed only if never homed
       #endif
     ) {
-      #if ENABLED(DEBUG_LEVELING_FEATURE)
-        if (DEBUGGING(LEVELING)) {
-          SERIAL_ECHOLNPGM("> homing not needed, skip");
-          SERIAL_ECHOLNPGM("<<< G28");
-        }
-      #endif
+      if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("> homing not needed, skip\n<<< G28");
       return;
     }
   }
@@ -243,14 +246,12 @@ void GcodeSuite::G28(const bool always_home_all) {
     tool_change(0, 0, true);
   #endif
 
-  #if ENABLED(DUAL_X_CARRIAGE) || ENABLED(DUAL_NOZZLE_DUPLICATION_MODE)
+  #if HAS_DUPLICATION_MODE
     extruder_duplication_enabled = false;
   #endif
 
   setup_for_endstop_or_probe_move();
-  #if ENABLED(DEBUG_LEVELING_FEATURE)
-    if (DEBUGGING(LEVELING)) SERIAL_ECHOLNPGM("> endstops.enable(true)");
-  #endif
+
   endstops.enable(true); // Enable endstops for next homing move
 
   #if ENABLED(DELTA)
@@ -284,12 +285,7 @@ void GcodeSuite::G28(const bool always_home_all) {
       // Raise Z before homing any other axes and z is not already high enough (never lower z)
       destination[Z_AXIS] = z_homing_height;
       if (destination[Z_AXIS] > current_position[Z_AXIS]) {
-
-        #if ENABLED(DEBUG_LEVELING_FEATURE)
-          if (DEBUGGING(LEVELING))
-            SERIAL_ECHOLNPAIR("Raise Z (before homing) to ", destination[Z_AXIS]);
-        #endif
-
+        if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPAIR("Raise Z (before homing) to ", destination[Z_AXIS]);
         do_blocking_move_to_z(destination[Z_AXIS]);
       }
     }
@@ -438,7 +434,13 @@ void GcodeSuite::G28(const bool always_home_all) {
       SERIAL_ECHOLNPGM(MSG_Z_MOVE_COMP);
   #endif
 
-  #if ENABLED(DEBUG_LEVELING_FEATURE)
-    if (DEBUGGING(LEVELING)) SERIAL_ECHOLNPGM("<<< G28");
+  if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("<<< G28");
+
+  #if HAS_DRIVER(L6470)
+    // Set L6470 absolute position registers to counts
+    for (uint8_t j = 1; j <= L6470::chain[0]; j++) {
+      const uint8_t cv = L6470::chain[j];
+      L6470.set_param(cv, L6470_ABS_POS, stepper.position((AxisEnum)L6470.axis_xref[cv]));
+    }
   #endif
 }
