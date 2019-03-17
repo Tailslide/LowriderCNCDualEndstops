@@ -355,7 +355,8 @@
  * in X2. Dual endstop offsets can be set at runtime with 'M666 X<offset> Y<offset> Z<offset>'.
  */
 
-#define X_DUAL_STEPPER_DRIVERS
+//FSIGAP - only one stepper on low rider
+//#define X_DUAL_STEPPER_DRIVERS
 #if ENABLED(X_DUAL_STEPPER_DRIVERS)
   #define INVERT_X2_VS_X_DIR true   // Set 'true' if X motors should rotate in opposite directions
   #define X_DUAL_ENDSTOPS
@@ -451,7 +452,7 @@
 // @section homing
 
 // Homing hits each endstop, retracts by these distances, then does a slower bump.
-#define X_HOME_BUMP_MM 7
+#define X_HOME_BUMP_MM 3
 #define Y_HOME_BUMP_MM 7
 #define Z_HOME_BUMP_MM 3
 #define HOMING_BUMP_DIVISOR { 4, 4, 6 }  // Re-Bump Speed Divisor (Divides the Homing Feedrate)

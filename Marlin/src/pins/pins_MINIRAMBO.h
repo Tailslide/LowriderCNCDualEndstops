@@ -58,28 +58,29 @@
 #define X_DIR_PIN          48
 #define X_ENABLE_PIN       29
 
-#define Y_STEP_PIN         36
-#define Y_DIR_PIN          49
-#define Y_ENABLE_PIN       28
+#define Y_STEP_PIN         36  //FSIGAP2 - not changed from 36
+#define Y_DIR_PIN          49 //FSIGAP2 - not changed from 49
+#define Y_ENABLE_PIN       28 //FSIGAP2 - not changed from 28
 
 #define Z_STEP_PIN         35
 #define Z_DIR_PIN          47
 #define Z_ENABLE_PIN       27
 
-
+// FSIGAP Dummy entry so we can compile
 #define E0_STEP_PIN        33 //FSIGAP - redefined from 34
 #define E0_DIR_PIN         42 //FSIGAP - redefined from 43
 #define E0_ENABLE_PIN      25 //FSIGAP - redefined from 26
 
-// FSIGAP - define second Y motor
-#define E1_STEP_PIN        34
-#define E1_DIR_PIN         43
-#define E1_ENABLE_PIN      26
+// FSIGAP Dummy entry so we can compile
+//#define E1_STEP_PIN        58
+//#define E1_DIR_PIN         40
+//#define E1_ENABLE_PIN      78
 
-// FSIGAP trying to fix compile error
-#define E2_STEP_PIN        58
-#define E2_DIR_PIN         40
-#define E2_ENABLE_PIN      78
+// FSIGAP - define second Y motor
+#define E1_STEP_PIN        34 //FSIGAP2 - changed from 34
+#define E1_DIR_PIN         43 //FSIGAP2 - changed from 43
+#define E1_ENABLE_PIN      26 //FSIGAP2 - change from 26
+
 
 // Microstepping pins - Mapping not from fastio.h (?)
 #define X_MS1_PIN          40
@@ -98,7 +99,10 @@
 #ifndef MOTOR_CURRENT_PWM_RANGE
   #define MOTOR_CURRENT_PWM_RANGE 2000
 #endif
-#define DEFAULT_PWM_MOTOR_CURRENT  {1300, 1300, 1250}
+//FSIGAP - set second Y motor to same current
+#define DEFAULT_PWM_MOTOR_CURRENT  {1300, 1300, 1300}
+//#define DEFAULT_PWM_MOTOR_CURRENT  {1300, 1300, 1250}
+
 
 //
 // Temperature Sensors
