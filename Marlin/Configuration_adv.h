@@ -2072,7 +2072,7 @@
   //FSIGAP - HOME X and Y, then drop carriage at Y=0 to align Z axis, then probe Z
   #define USER_DESC_1 "Home XYZ drop Z align"
   //FSIGAP change G0 X to middle of bed
-  #define USER_GCODE_1 "G28 X Y\nM220 S100\nG0 X210\nG0 Z10\nG91\nG0 Z-5\nG0 Z5\nM18 Z\nG90\nG4 P2000\nM17\nG4 P500\nM220 S100\nG0 Z40\nG28 Z\nM220 S100\nG0 X0"
+  #define USER_GCODE_1 "G28 X Y\nM220 S100\nG0 X210\nG0 Z10\nG91\nG0 Z-5\nM18 Z\nG90\nG4 P2000\nM17\nG4 P500\nM220 S100\nG0 Z40\nG28 Z\nM220 S100\nG0 X0"
 
   #define USER_DESC_2 "Reset All Coordinates"
   #define USER_GCODE_2 "G92 X0 Y0 Z0"
