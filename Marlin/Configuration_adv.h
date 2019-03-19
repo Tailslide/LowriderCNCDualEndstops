@@ -2064,18 +2064,24 @@
 #define CUSTOM_USER_MENUS
 #if ENABLED(CUSTOM_USER_MENUS)
   #define CUSTOM_USER_MENU_TITLE "Custom Commands"
-  #define USER_SCRIPT_DONE "M117 User Coomand Done"
+  #define USER_SCRIPT_DONE "M117 User Command Done"
   #define USER_SCRIPT_AUDIBLE_FEEDBACK
   //#define USER_SCRIPT_RETURN  // Return to status screen after a script
 
-  #define USER_DESC_1 "Reset All Coordinates"
-  #define USER_GCODE_1 "G92 X0 Y0 Z0"
+  //FSIGAP - HOME X and Y, then drop carriage at Y=0 to align Z axis, then probe Z
+  #define USER_DESC_1 "Home XYZ drop Z align"
+  //FSIGAP change G0 X to middle of bed
+  #define USER_GCODE_1 "G28 X Y\nG0 X210\nM18 Z\nG4 P2000\nG0 Z20\nG28 Z\nG0 X0"
 
-  #define USER_DESC_2 "Home Z Axis"
-  #define USER_GCODE_2 "G28 Z"
+  #define USER_DESC_2 "Reset All Coordinates"
+  #define USER_GCODE_2 "G92 X0 Y0 Z0"
 
-  #define USER_DESC_3 "Home X&Y"
-  #define USER_GCODE_3 "G28 X Y"
+  #define USER_DESC_3 "Home Z Axis"
+  #define USER_GCODE_3 "G28 Z"
+
+  #define USER_DESC_4 "Home X&Y"
+  #define USER_GCODE_4 "G28 X Y"
+
 
 //#define USER_DESC_4 "Heat Bed/Home/Level"
 //#define USER_GCODE_4 "M140 S" STRINGIFY(PREHEAT_2_TEMP_BED) "\nG28\nG29"
