@@ -667,6 +667,7 @@
  *    M908 - BQ_ZUM_MEGA_3D, RAMBO, PRINTRBOARD_REVF, RIGIDBOARD_V2 & SCOOVO_X9H
  *    M909, M910 & LCD - only PRINTRBOARD_REVF & RIGIDBOARD_V2
  */
+//FSIGAP - set Y2 current same as Y, increase Z current
 #define PWM_MOTOR_CURRENT { 1300, 1300, 1300 }          // Values in milliamps
 //#define DIGIPOT_MOTOR_CURRENT { 120, 120, 120, 120, 120 }   // Values 0-255 (RAMBO 135 = ~0.75A, 185 = ~1A)
 //#define DAC_MOTOR_CURRENT_DEFAULT { 70, 80, 90, 80 }    // Default drive percent - X, Y, Z, E axis
@@ -2071,7 +2072,7 @@
   //FSIGAP - HOME X and Y, then drop carriage at Y=0 to align Z axis, then probe Z
   #define USER_DESC_1 "Home XYZ drop Z align"
   //FSIGAP change G0 X to middle of bed
-  #define USER_GCODE_1 "G28 X Y\nG0 X210\nM18 Z\nG4 P2000\nG0 Z20\nG28 Z\nG0 X0"
+  #define USER_GCODE_1 "G28 X Y\nM220 S100\nG0 X210\nG0 Z10\nG91\nG0 Z-5\nM18 Z\nG90\nG4 P2000\nM17\nG4 P500\nM220 S100\nG0 Z40\nG28 Z\nM220 S100\nG0 X0"
 
   #define USER_DESC_2 "Reset All Coordinates"
   #define USER_GCODE_2 "G92 X0 Y0 Z0"

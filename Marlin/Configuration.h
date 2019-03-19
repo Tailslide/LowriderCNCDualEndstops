@@ -695,7 +695,7 @@
  *                                      X, Y, Z, E0 [, E1[, E2[, E3[, E4[, E5]]]]]
  */
  //FSIGAP - reduce Z max feedrate to prevent skipping when feedrate maxed out and lowrider weight all near one screw
-#define DEFAULT_MAX_FEEDRATE          { 120, 120, 30, 25 }
+#define DEFAULT_MAX_FEEDRATE          { 120, 120, 6, 25 }
 
 /**
  * Default Max Acceleration (change/s) change = mm/s
@@ -1103,10 +1103,9 @@
  *   With an LCD controller the process is guided step-by-step.
  */
 
-//FSIGAP - trying to get safe Z homing working
 //#define AUTO_BED_LEVELING_3POINT
 //#define AUTO_BED_LEVELING_LINEAR
-#define AUTO_BED_LEVELING_BILINEAR
+//#define AUTO_BED_LEVELING_BILINEAR
 //#define AUTO_BED_LEVELING_UBL
 //#define MESH_BED_LEVELING
 
