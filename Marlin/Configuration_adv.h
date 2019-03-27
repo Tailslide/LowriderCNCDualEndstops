@@ -372,7 +372,8 @@
   #define Y_DUAL_ENDSTOPS
   #if ENABLED(Y_DUAL_ENDSTOPS)
     #define Y2_USE_ENDSTOP _YMAX_
-    #define Y_DUAL_ENDSTOPS_ADJUSTMENT  0
+    //FSIGAP - set to the offset to square printer. Check by drawing box and measuring diagonals
+    #define Y_DUAL_ENDSTOPS_ADJUSTMENT  -7
   #endif
 #endif
 
