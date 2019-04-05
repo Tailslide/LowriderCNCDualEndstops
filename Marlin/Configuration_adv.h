@@ -373,7 +373,7 @@
   #if ENABLED(Y_DUAL_ENDSTOPS)
     #define Y2_USE_ENDSTOP _YMAX_
     //FSIGAP - Adjust for endstop placement
-    #define Y_DUAL_ENDSTOPS_ADJUSTMENT  8
+    #define Y_DUAL_ENDSTOPS_ADJUSTMENT  -5.5
   #endif
 #endif
 
@@ -2073,7 +2073,7 @@
   //FSIGAP - HOME X and Y, then drop carriage at Y=0 to align Z axis, then probe Z
   #define USER_DESC_1 "Home XYZ drop Z align"
   //FSIGAP change G0 X to middle of bed
-  #define USER_GCODE_1 "G28 X Y\nM220 S100\nG0 X250Y5\nG91\nG0 Z10\nG91\nG0 Z-5\nM18 Z\nG90\nG4 P2000\nM17\nG4 P500\nM220 S100\nG91\nG0 Z40\nG90\nG28 Z\nM220 S100\nG0 X0 Z40\nG0 Y150\nG0 Y100\nG0 Y150\nG0 X0Y10"
+  #define USER_GCODE_1 "G28 X Y\nM220 S100\nG0 X250Y5\nG91\nG0 Z10\nG91\nG0 Z-5\nM18 Z\nG90\nG4 P2000\nM17\nG4 P500\nM220 S100\nG91\nG0 Z70\nG90\nG28 Z\nM220 S100\nG0 X0 Z40\nG0 Y150\nG0 Y100\nG0 Y150\nG0 X0Y10"
 
   #define USER_DESC_2 "Reset All Coordinates"
   #define USER_GCODE_2 "G92 X0 Y0 Z0"
