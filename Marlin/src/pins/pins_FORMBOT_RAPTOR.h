@@ -149,10 +149,6 @@
   #define FAN_PIN           9
 #endif
 
-#ifndef FIL_RUNOUT_PIN
-  #define FIL_RUNOUT_PIN   57
-#endif
-
 #if !HAS_FILAMENT_SENSOR
   #define FAN1_PIN          4
 #endif
@@ -172,8 +168,6 @@
 #ifndef PS_ON_PIN
   #define PS_ON_PIN        12
 #endif
-
-#define CASE_LIGHT_PIN      5
 
 //
 // LCD / Controller

@@ -38,10 +38,6 @@
   #include "../../module/probe.h"
 #endif
 
-#if ENABLED(BLTOUCH)
-  #include "../../feature/bltouch.h"
-#endif
-
 #if HAS_LEVELING
   #include "../../feature/bedlevel/bedlevel.h"
 #endif

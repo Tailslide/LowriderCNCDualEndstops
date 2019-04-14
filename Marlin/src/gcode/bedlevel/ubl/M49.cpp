@@ -20,17 +20,21 @@
  *
  */
 
-#ifdef ARDUINO_ARCH_ESP32
+/**
+ * M49.cpp - Toggle the G26 debug flag
+ */
 
-#include <HardwareSerial.h>
+#include "../../../inc/MarlinConfig.h"
 
-class FlushableHardwareSerial : public HardwareSerial {
-public:
-  FlushableHardwareSerial(int uart_nr);
+#if ENABLED(G26_MESH_VALIDATION)
 
-  inline void flushTX(void) { /* No need to flush the hardware serial, but defined here for compatibility. */ }
-};
+#include "../../gcode.h"
+#include "../../../feature/bedlevel/bedlevel.h"
 
-extern FlushableHardwareSerial flushableSerial;
+void GcodeSuite::M49() {
+  g26_debug_flag ^= true;
+  SERIAL_ECHOPGM("G26 Debug: ");
+  serialprintPGM(g26_debug_flag ? PSTR("On\n") : PSTR("Off\n"));
+}
 
-#endif // ARDUINO_ARCH_ESP32
+#endif // G26_MESH_VALIDATION

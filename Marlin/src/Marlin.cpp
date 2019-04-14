@@ -30,7 +30,6 @@
 
 #include "Marlin.h"
 
-#include "core/utility.h"
 #include "lcd/ultralcd.h"
 #include "module/motion.h"
 #include "module/planner.h"
@@ -457,7 +456,7 @@ void manage_inactivity(const bool ignore_stepper_queue/*=false*/) {
   if (stepper_inactive_time) {
     static bool already_shutdown_steppers; // = false
     if (planner.has_blocks_queued())
-      gcode.reset_stepper_timeout();
+      gcode.previous_move_ms = ms; // reset_stepper_timeout to keep steppers powered
     else if (MOVE_AWAY_TEST && !ignore_stepper_queue && ELAPSED(ms, gcode.previous_move_ms + stepper_inactive_time)) {
       if (!already_shutdown_steppers) {
         already_shutdown_steppers = true;  // L6470 SPI will consume 99% of free time without this
@@ -473,11 +472,14 @@ void manage_inactivity(const bool ignore_stepper_queue/*=false*/) {
         #if ENABLED(DISABLE_INACTIVE_E)
           disable_e_steppers();
         #endif
-        #if HAS_LCD_MENU && ENABLED(AUTO_BED_LEVELING_UBL)
-          if (ubl.lcd_map_control) {
-            ubl.lcd_map_control = false;
-            ui.defer_status_screen(false);
-          }
+        #if HAS_LCD_MENU
+          ui.status_screen();
+          #if ENABLED(AUTO_BED_LEVELING_UBL)
+            if (ubl.lcd_map_control) {
+              ubl.lcd_map_control = false;
+              ui.defer_status_screen(false);
+            }
+          #endif
         #endif
       }
     }
@@ -614,7 +616,7 @@ void manage_inactivity(const bool ignore_stepper_queue/*=false*/) {
         }
       #endif // !SWITCHING_EXTRUDER
 
-      gcode.reset_stepper_timeout();
+      gcode.previous_move_ms = ms; // reset_stepper_timeout to keep steppers powered
     }
   #endif // EXTRUDER_RUNOUT_PREVENT
 
@@ -720,7 +722,7 @@ void idle(
   #endif
 
   #if ENABLED(PRUSA_MMU2)
-    mmu2.mmu_loop();
+    mmu2.mmuLoop();
   #endif
 }
 
@@ -972,7 +974,7 @@ void setup() {
   #endif
 
   #if ENABLED(SPINDLE_LASER_ENABLE)
-    OUT_WRITE(SPINDLE_LASER_ENA_PIN, !SPINDLE_LASER_ENABLE_INVERT);  // init spindle to off
+    OUT_WRITE(SPINDLE_LASER_ENABLE_PIN, !SPINDLE_LASER_ENABLE_INVERT);  // init spindle to off
     #if SPINDLE_DIR_CHANGE
       OUT_WRITE(SPINDLE_DIR_PIN, SPINDLE_INVERT_DIR ? 255 : 0);  // init rotation to clockwise (M3)
     #endif
@@ -1042,7 +1044,7 @@ void setup() {
   ui.init();
   ui.reset_status();
 
-  #if HAS_SPI_LCD && ENABLED(SHOW_BOOTSCREEN)
+  #if ENABLED(SHOW_BOOTSCREEN)
     ui.show_bootscreen();
   #endif
 
@@ -1139,9 +1141,6 @@ void loop() {
         wait_for_heatup = false;
         #if ENABLED(POWER_LOSS_RECOVERY)
           card.removeJobRecoveryFile();
-        #endif
-        #ifdef EVENT_GCODE_SD_STOP
-          enqueue_and_echo_commands_P(PSTR(EVENT_GCODE_SD_STOP));
         #endif
       }
     #endif // SDSUPPORT

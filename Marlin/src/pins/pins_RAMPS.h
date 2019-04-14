@@ -63,12 +63,10 @@
 //
 // Servos
 //
-#ifndef SERVO0_PIN
-  #ifdef IS_RAMPS_13
-    #define SERVO0_PIN      7   // RAMPS_13 // Will conflict with BTN_EN2 on LCD_I2C_VIKI
-  #else
-    #define SERVO0_PIN     11
-  #endif
+#ifdef IS_RAMPS_13
+  #define SERVO0_PIN        7   // RAMPS_13 // Will conflict with BTN_EN2 on LCD_I2C_VIKI
+#else
+  #define SERVO0_PIN       11
 #endif
 #define SERVO1_PIN          6
 #define SERVO2_PIN          5
@@ -231,12 +229,10 @@
   #define PS_ON_PIN        12
 #endif
 
-#define AUX2_PINS_FREE !( BOTH(ULTRA_LCD, NEWPANEL) && ANY(PANEL_ONE, VIKI2, miniVIKI, MINIPANEL, REPRAPWORLD_KEYPAD) )
-
-#if ENABLED(CASE_LIGHT_ENABLE) && !defined(CASE_LIGHT_PIN) && !defined(SPINDLE_LASER_ENA_PIN)
+#if ENABLED(CASE_LIGHT_ENABLE) && !defined(CASE_LIGHT_PIN) && !defined(SPINDLE_LASER_ENABLE_PIN)
   #if NUM_SERVOS <= 1 // try to use servo connector first
     #define CASE_LIGHT_PIN    6   // MUST BE HARDWARE PWM
-  #elif AUX2_PINS_FREE
+  #elif !(BOTH(ULTRA_LCD, NEWPANEL) && ANY(PANEL_ONE, VIKI2, miniVIKI, MINIPANEL, REPRAPWORLD_KEYPAD))  // try to use AUX 2
     #define CASE_LIGHT_PIN   44   // MUST BE HARDWARE PWM
   #endif
 #endif
@@ -244,19 +240,17 @@
 //
 // M3/M4/M5 - Spindle/Laser Control
 //
-#if ENABLED(SPINDLE_LASER_ENABLE) && !PIN_EXISTS(SPINDLE_LASER_ENA)
+#if ENABLED(SPINDLE_LASER_ENABLE) && !PIN_EXISTS(SPINDLE_LASER_ENABLE)
   #if !defined(NUM_SERVOS) || NUM_SERVOS == 0 // try to use servo connector first
-    #define SPINDLE_LASER_ENA_PIN     4   // Pin should have a pullup/pulldown!
+    #define SPINDLE_LASER_ENABLE_PIN  4   // Pin should have a pullup/pulldown!
     #define SPINDLE_LASER_PWM_PIN     6   // MUST BE HARDWARE PWM
     #define SPINDLE_DIR_PIN           5
-  #elif AUX2_PINS_FREE
-    #define SPINDLE_LASER_ENA_PIN    40   // Pin should have a pullup/pulldown!
+  #elif !(BOTH(ULTRA_LCD, NEWPANEL) && ANY(PANEL_ONE, VIKI2, miniVIKI, MINIPANEL, REPRAPWORLD_KEYPAD))  // try to use AUX 2
+    #define SPINDLE_LASER_ENABLE_PIN 40   // Pin should have a pullup/pulldown!
     #define SPINDLE_LASER_PWM_PIN    44   // MUST BE HARDWARE PWM
     #define SPINDLE_DIR_PIN          65
   #endif
 #endif
-
-#undef AUX2_PINS_FREE
 
 //
 // TMC software SPI
@@ -521,31 +515,6 @@
 
       #define SD_DETECT_PIN     49
       #define KILL_PIN          41
-
-    #elif ENABLED(FYSETC_MINI_12864)   // Added in Marlin 1.1.9+
-
-      // From https://wiki.fysetc.com/Mini12864_Panel/?fbclid=IwAR1FyjuNdVOOy9_xzky3qqo_WeM5h-4gpRnnWhQr_O1Ef3h0AFnFXmCehK8
-      #define BEEPER_PIN        37
-      #define LCD_RESET_PIN     23
-
-      #define DOGLCD_A0         16
-      #define DOGLCD_CS         17
-
-      #define BTN_EN1           31
-      #define BTN_EN2           33
-      #define BTN_ENC           35
-
-      #define SD_DETECT_PIN     49
-
-      #ifndef RGB_LED_R_PIN
-        #define RGB_LED_R_PIN   25
-      #endif
-      #ifndef RGB_LED_G_PIN
-        #define RGB_LED_G_PIN   27
-      #endif
-      #ifndef RGB_LED_B_PIN
-        #define RGB_LED_B_PIN   29
-      #endif
 
     #elif ENABLED(MINIPANEL)
 

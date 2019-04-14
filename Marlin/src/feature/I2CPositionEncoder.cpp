@@ -38,8 +38,6 @@
 #include "../module/stepper.h"
 #include "../gcode/parser.h"
 
-#include "../feature/babystep.h"
-
 #include <Wire.h>
 
 void I2CPositionEncoder::init(const uint8_t address, const AxisEnum axis) {
@@ -171,7 +169,7 @@ void I2CPositionEncoder::update() {
             const int32_t errorP = int32_t(sumP * (1.0f / (I2CPE_ERR_PRST_ARRAY_SIZE)));
             SERIAL_ECHO(axis_codes[encoderAxis]);
             SERIAL_ECHOLNPAIR(" - err detected: ", errorP * planner.steps_to_mm[encoderAxis], "mm; correcting!");
-            babystep.add_steps(encoderAxis, -LROUND(errorP));
+            thermalManager.babystepsTodo[encoderAxis] = -LROUND(errorP);
             errPrstIdx = 0;
           }
         }
@@ -182,7 +180,7 @@ void I2CPositionEncoder::update() {
       if (ABS(error) > threshold * planner.settings.axis_steps_per_mm[encoderAxis]) {
         //SERIAL_ECHOLN(error);
         //SERIAL_ECHOLN(position);
-        babystep.add_steps(encoderAxis, -LROUND(error / 2));
+        thermalManager.babystepsTodo[encoderAxis] = -LROUND(error / 2);
       }
     #endif
 
@@ -229,11 +227,13 @@ bool I2CPositionEncoder::passes_test(const bool report) {
   if (report) {
     if (H != I2CPE_MAG_SIG_GOOD) SERIAL_ECHOPGM("Warning. ");
     SERIAL_ECHO(axis_codes[encoderAxis]);
-    serial_ternary(H == I2CPE_MAG_SIG_BAD, PSTR(" axis "), PSTR("magnetic strip "), PSTR("encoder "));
+    SERIAL_ECHOPGM(" axis ");
+    serialprintPGM(H == I2CPE_MAG_SIG_BAD ? PSTR("magnetic strip ") : PSTR("encoder "));
     switch (H) {
       case I2CPE_MAG_SIG_GOOD:
       case I2CPE_MAG_SIG_MID:
-        serial_ternary(H == I2CPE_MAG_SIG_GOOD, PSTR("passes test; field strength "), PSTR("good"), PSTR("fair"), PSTR(".\n"));
+        SERIAL_ECHOLNPGM("passes test; field strength ");
+        serialprintPGM(H == I2CPE_MAG_SIG_GOOD ? PSTR("good.\n") : PSTR("fair.\n"));
         break;
       default:
         SERIAL_ECHOLNPGM("not detected!");

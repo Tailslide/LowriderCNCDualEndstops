@@ -8,26 +8,19 @@ function activate(context) {
 
   var NEXT_TERM_ID = 1;
   var pio_build     = vscode.commands.registerCommand('piobuild',     function () {
-    vscode.commands.executeCommand('workbench.action.files.saveAll');
-    const terminal = vscode.window.createTerminal(`AB Build #${NEXT_TERM_ID++}`);
-    terminal.show(true);
+    const terminal = vscode.window.createTerminal(`#${NEXT_TERM_ID++}`);
     terminal.sendText("python buildroot/share/atom/auto_build.py build");
     });
   var pio_clean     = vscode.commands.registerCommand('pioclean',     function () {
-    const terminal = vscode.window.createTerminal(`AB Clean #${NEXT_TERM_ID++}`);
-    terminal.show(true);
+    const terminal = vscode.window.createTerminal(`#${NEXT_TERM_ID++}`);
     terminal.sendText("python buildroot/share/atom/auto_build.py clean");
   });
   var pio_upload    = vscode.commands.registerCommand('pioupload',    function () {
-    vscode.commands.executeCommand('workbench.action.files.saveAll');
-    const terminal = vscode.window.createTerminal(`AB Upload #${NEXT_TERM_ID++}`);
-    terminal.show(true);
+    const terminal = vscode.window.createTerminal(`#${NEXT_TERM_ID++}`);
     terminal.sendText("python buildroot/share/atom/auto_build.py upload");
   });
   var pio_traceback = vscode.commands.registerCommand('piotraceback', function () {
-    vscode.commands.executeCommand('workbench.action.files.saveAll');
-    const terminal = vscode.window.createTerminal(`AB Traceback #${NEXT_TERM_ID++}`);
-    terminal.show(true);
+    const terminal = vscode.window.createTerminal(`#${NEXT_TERM_ID++}`);
     terminal.sendText("python buildroot/share/atom/auto_build.py traceback");
   });
 
