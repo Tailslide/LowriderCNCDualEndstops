@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -45,10 +45,8 @@ void GcodeSuite::M810_819() {
 
   if (len) {
     // Set a macro
-    if (len > GCODE_MACROS_SLOT_SIZE) {
-      SERIAL_ERROR_START();
-      SERIAL_ERRORLNPGM("Macro too long.");
-    }
+    if (len > GCODE_MACROS_SLOT_SIZE)
+      SERIAL_ERROR_MSG("Macro too long.");
     else {
       char c, *s = parser.string_arg, *d = gcode_macros[index];
       do {
