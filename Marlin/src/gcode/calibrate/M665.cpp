@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -84,8 +84,7 @@
         if (sumAPX == 1)
           scara_home_offset[A_AXIS] = parser.value_float();
         else {
-          SERIAL_ERROR_START();
-          SERIAL_ERRORLNPGM("Only one of A, P, or X is allowed.");
+          SERIAL_ERROR_MSG("Only one of A, P, or X is allowed.");
           return;
         }
       }
@@ -96,8 +95,7 @@
         if (sumBTY == 1)
           scara_home_offset[B_AXIS] = parser.value_float();
         else {
-          SERIAL_ERROR_START();
-          SERIAL_ERRORLNPGM("Only one of B, T, or Y is allowed.");
+          SERIAL_ERROR_MSG("Only one of B, T, or Y is allowed.");
           return;
         }
       }
