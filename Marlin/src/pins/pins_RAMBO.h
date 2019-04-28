@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -148,8 +148,8 @@
 //
 // M3/M4/M5 - Spindle/Laser Control
 //
-#define SPINDLE_LASER_PWM_PIN    45
-#define SPINDLE_LASER_ENABLE_PIN 31
+#define SPINDLE_LASER_PWM_PIN    45   // MUST BE HARDWARE PWM
+#define SPINDLE_LASER_ENA_PIN    31   // Pin should have a pullup!
 #define SPINDLE_DIR_PIN          32
 
 //
@@ -157,7 +157,7 @@
 //
 #define E_MUX0_PIN         17
 #define E_MUX1_PIN         16
-#define E_MUX2_PIN         84
+#define E_MUX2_PIN         84   // 84 in MK2 Firmware
 
 //
 // LCD / Controller
@@ -175,7 +175,7 @@
     #define LCD_PINS_D6     74
     #define LCD_PINS_D7     75
 
-    #if ENABLED(VIKI2) || ENABLED(miniVIKI)
+    #if ANY(VIKI2, miniVIKI)
       #define BEEPER_PIN   44
       // NB: Panucatt's Viki 2.0 wiring diagram (v1.2) indicates that the
       //     beeper/buzzer is connected to pin 33; however, the pin used in the
@@ -189,14 +189,14 @@
       #define BTN_EN2      84
       #define BTN_ENC      83
 
-      #define SD_DETECT_PIN -1
+      #define SD_DETECT_PIN -1   // Pin 72 if using easy adapter board
 
       #define STAT_LED_RED_PIN 22
       #define STAT_LED_BLUE_PIN 32
 
     #else // !VIKI2 && !miniVIKI
 
-      #define BEEPER_PIN   79
+      #define BEEPER_PIN   79   // AUX-4
 
       // AUX-2
       #define BTN_EN1      76
