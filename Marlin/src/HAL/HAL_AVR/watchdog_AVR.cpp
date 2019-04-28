@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -62,8 +62,7 @@ void watchdog_init() {
 #if ENABLED(WATCHDOG_RESET_MANUAL)
   ISR(WDT_vect) {
     sei();  // With the interrupt driven serial we need to allow interrupts.
-    SERIAL_ERROR_START();
-    SERIAL_ERRORLNPGM(MSG_WATCHDOG_FIRED);
+    SERIAL_ERROR_MSG(MSG_WATCHDOG_FIRED);
     minkill();  // interrupt-safe final kill and infinite loop
   }
 #endif // WATCHDOG_RESET_MANUAL
