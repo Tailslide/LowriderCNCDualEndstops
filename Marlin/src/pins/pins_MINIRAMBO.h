@@ -41,14 +41,16 @@
 #define X_MAX_PIN          30
 #define Y_MIN_PIN          11
 #define Y_MAX_PIN          24
-#define Z_MIN_PIN          10
-#define Z_MAX_PIN          23
+#define Z_MIN_PIN          23 // FSIGAP - used to be 10, set zmin endstop to zmax connector
+#define Z_MAX_PIN          -1 //FSIGAP - used to be 23, disable so we can use this pin for servo
+
+#define SERVO0_PIN         10 // FSIGAP - assign servo to zmin connector
 
 //
 // Z Probe (when not Z_MIN_PIN)
 //
 #ifndef Z_MIN_PROBE_PIN
-  #define Z_MIN_PROBE_PIN  23
+  #define Z_MIN_PROBE_PIN  30 // FSIGAP -used to be 23 but using that for servo now
 #endif
 
 //

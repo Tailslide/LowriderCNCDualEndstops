@@ -998,8 +998,8 @@
 // @section machine
 
 // The size of the print bed
-#define X_BED_SIZE 430
-#define Y_BED_SIZE 900
+#define X_BED_SIZE 1252  //FSIGAP
+#define Y_BED_SIZE 2605  // FSIGAP
 
 // Travel limits (mm) after homing, corresponding to endstop positions.
 #define X_MIN_POS 0
@@ -1285,7 +1285,7 @@
 
 #if ENABLED(Z_SAFE_HOMING)
   // FSIGAP - home to our contact Z pad on right of lowrider
-  #define Z_SAFE_HOMING_X_POINT (X_BED_SIZE -5)    // X point for Z homing when homing all axes (G28).
+  #define Z_SAFE_HOMING_X_POINT (X_BED_SIZE -17)    // X point for Z homing when homing all axes (G28).
   #define Z_SAFE_HOMING_Y_POINT 0    // Y point for Z homing when homing all axes (G28).
 #endif
 
@@ -2104,7 +2104,7 @@
  * Set this manually if there are extra servos needing manual control.
  * Leave undefined or set to 0 to entirely disable the servo subsystem.
  */
-//#define NUM_SERVOS 3 // Servo index starts with 0 for M280 command
+ #define NUM_SERVOS 1 // FSIGAP was diabled, using one zervo to deploy z min endstop // Servo index starts with 0 for M280 command
 
 // Delay (in milliseconds) before the next move will start, to give the servo time to reach its target angle.
 // 300ms is a good value but you can try less delay.

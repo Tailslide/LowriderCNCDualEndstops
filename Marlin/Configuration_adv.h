@@ -373,7 +373,7 @@
   #if ENABLED(Y_DUAL_ENDSTOPS)
     #define Y2_USE_ENDSTOP _YMAX_
     //FSIGAP - Adjust for endstop placement
-    #define Y_DUAL_ENDSTOPS_ADJUSTMENT  -5.5
+    #define Y_DUAL_ENDSTOPS_ADJUSTMENT  -1.5// was -5.5
   #endif
 #endif
 
