@@ -700,7 +700,7 @@
  *                                      X, Y, Z, E0 [, E1[, E2[, E3[, E4[, E5]]]]]
  */
  //FSIGAP - reduce Z max feedrate to prevent skipping when feedrate maxed out and lowrider weight all near one screw
-#define DEFAULT_MAX_FEEDRATE          { 120, 120, 6, 25 }
+#define DEFAULT_MAX_FEEDRATE          { 160, 160, 6, 25 }// fsigap was 120,120
 
 /**
  * Default Max Acceleration (change/s) change = mm/s
@@ -1027,7 +1027,7 @@
 #endif
 
 // Max software endstops constrain movement within maximum coordinate bounds
-//#define MAX_SOFTWARE_ENDSTOPS
+#define MAX_SOFTWARE_ENDSTOPS  // FSIGAP - enabled
 #if ENABLED(MAX_SOFTWARE_ENDSTOPS)
   #define MAX_SOFTWARE_ENDSTOP_X
   #define MAX_SOFTWARE_ENDSTOP_Y
@@ -1035,7 +1035,7 @@
 #endif
 
 #if EITHER(MIN_SOFTWARE_ENDSTOPS, MAX_SOFTWARE_ENDSTOPS)
-  //#define SOFT_ENDSTOPS_MENU_ITEM  // Enable/Disable software endstops from the LCD
+  #define SOFT_ENDSTOPS_MENU_ITEM  // FSIGAP - enable Enable/Disable software endstops from the LCD
 #endif
 
 /**
@@ -1290,7 +1290,7 @@
 #endif
 
 // Homing speeds (mm/m)
-#define HOMING_FEEDRATE_XY (30*60)
+#define HOMING_FEEDRATE_XY (50*60) // was 40*60
 #define HOMING_FEEDRATE_Z  (3*60)
 
 // Validate that endstops are triggered on homing moves
