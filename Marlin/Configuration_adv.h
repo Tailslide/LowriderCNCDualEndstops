@@ -2072,14 +2072,16 @@
 
   //FSIGAP - HOME X and Y, then drop carriage at Y=0 to align Z axis, then probe Z
   #define USER_DESC_1 "Home XYZ drop Z align"
-  //FSIGAP change G0 X to middle of bed
-  #define USER_GCODE_1 "G28 X Y\nM220 S100\nG0 X250Y5\nG91\nG0 Z10\nG91\nG0 Z-5\nM18 Z\nG90\nG4 P2000\nM17\nG4 P500\nM220 S100\nG91\nG0 Z70\nG90\nG28 Z\nM220 S100\nG0 X0 Z40\nG0 Y150\nG0 Y100\nG0 Y150\nG0 X0Y10"
+  //FSIGAP update with newer homing code
+  #define USER_GCODE_1 "G54\nG28 X Y\nM220 S200\nG0 X640Y0\nG91\nG0 Z10\nG91\nG0 Z-5\nM18 Z\nG90\nG4 P3000\nG92 Z0\nM17\nM220 S100\nG91\nG0 Z70\nG90\nM280 P0 S92\nG4 P300\nM280 P0 S93\nG4 P300\nG28 Z\nG92 Z26\nM280 P0 S140\nM220 S300\nG0 X0 Z40\nM220 S100"
+//  G28 X Y\nM220 S100\nG0 X250Y5\nG91\nG0 Z10\nG91\nG0 Z-5\nM18 Z\nG90\nG4 P2000\nM17\nG4 P500\nM220 S100\nG91\nG0 Z70\nG90\nG28 Z\nM220 S100\nG0 X0 Z40\nG0 Y150\nG0 Y100\nG0 Y150\nG0 X0Y10"
 
   #define USER_DESC_2 "Reset All Coordinates"
   #define USER_GCODE_2 "G92 X0 Y0 Z0"
 
   #define USER_DESC_3 "Home Z Axis"
-  #define USER_GCODE_3 "G28 Z"
+  // FSIGAP - update with newer Z homing code
+  #define USER_GCODE_3 "M280 P0 S92\nG4 P300\nM280 P0 S93\nG4 P300\nG28 Z\nG92 Z26\nM280 P0 S140"
 
   #define USER_DESC_4 "Home X&Y"
   #define USER_GCODE_4 "G28 X Y"
