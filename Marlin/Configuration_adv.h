@@ -2086,7 +2086,9 @@
   #define USER_DESC_4 "Home X&Y"
   #define USER_GCODE_4 "G28 X Y"
 
-
+  //FSIGAP - Add park command
+  #define USER_DESC_5 "Park"
+  #define USER_GCODE_5 "G54\nG90\nG0 Z70\nG0 X640Y0\nG0 Z10"
 //#define USER_DESC_4 "Heat Bed/Home/Level"
 //#define USER_GCODE_4 "M140 S" STRINGIFY(PREHEAT_2_TEMP_BED) "\nG28\nG29"
 
