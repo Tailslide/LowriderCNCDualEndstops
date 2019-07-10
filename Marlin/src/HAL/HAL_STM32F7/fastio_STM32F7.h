@@ -47,12 +47,10 @@
 
 #define TOGGLE(IO)              OUT_WRITE(IO, !READ(IO))
 
-#define GET_INPUT(IO)
-#define GET_OUTPUT(IO)
-#define GET_TIMER(IO)
+#define IS_INPUT(IO)
+#define IS_OUTPUT(IO)
 
 #define PWM_PIN(P)              true
-#define USEABLE_HARDWARE_PWM(P) PWM_PIN(P)
 
 // digitalRead/Write wrappers
 #define extDigitalRead(IO)    digitalRead(IO)

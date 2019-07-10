@@ -46,7 +46,6 @@
 // Due has 12 PWMs assigned to logical pins 2-13.
 // 6, 7, 8 & 9 come from the PWM controller. The others come from the timers.
 #define PWM_PIN(P)              WITHIN(P, 2, 13)
-#define USEABLE_HARDWARE_PWM(P) PWM_PIN(P)
 
 #ifndef MASK
   #define MASK(PIN) (1 << PIN)
@@ -177,11 +176,9 @@
 #define SET_PWM(IO)           SET_OUTPUT(IO)
 
 // Check if pin is an input
-#define GET_INPUT(IO)        ((digitalPinToPort(IO)->PIO_OSR & digitalPinToBitMask(IO)) == 0)
+#define IS_INPUT(IO)         ((digitalPinToPort(IO)->PIO_OSR & digitalPinToBitMask(IO)) == 0)
 // Check if pin is an output
-#define GET_OUTPUT(IO)       ((digitalPinToPort(IO)->PIO_OSR & digitalPinToBitMask(IO)) != 0)
-// Check if pin is a timer - Must be a constexpr
-#define GET_TIMER(IO)         ((IO) >= 2 && (IO) <= 13)
+#define IS_OUTPUT(IO)        ((digitalPinToPort(IO)->PIO_OSR & digitalPinToBitMask(IO)) != 0)
 
 // Shorthand
 #define OUT_WRITE(IO,V)       { SET_OUTPUT(IO); WRITE(IO,V); }

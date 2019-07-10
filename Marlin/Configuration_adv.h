@@ -623,7 +623,6 @@
     //#define CALIBRATION_PIN_PULLDOWN
     #define CALIBRATION_PIN_PULLUP
   #endif
->>>>>>> upstream/bugfix-2.0.x
 #endif
 
 /**

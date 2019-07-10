@@ -40,6 +40,8 @@
 //
 // Steppers
 //
+#define I2S_STEPPER_STREAM
+
 #define X_STEP_PIN         128
 #define X_DIR_PIN          129
 #define X_ENABLE_PIN       130
@@ -72,3 +74,6 @@
 #define HEATER_0_PIN         2
 #define FAN_PIN             13
 #define HEATER_BED_PIN       4
+
+// SPI
+#define SDSS                 5

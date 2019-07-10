@@ -25,7 +25,7 @@
  * Fast I/O Routines for X86_64
  */
 
-#include <Arduino.h>
+#include "../shared/Marduino.h"
 #include <pinmapping.h>
 
 #define SET_DIR_INPUT(IO)     Gpio::setDir(IO, 1)
@@ -75,20 +75,10 @@
 // hg42: currently not used, but was used by pinsDebug
 
 /// check if pin is an input
-#define _GET_INPUT(IO)        (LPC1768_PIN_PIN(IO) >= 0)
+#define _IS_INPUT(IO)         (LPC1768_PIN_PIN(IO) >= 0)
 
 /// check if pin is an output
-#define _GET_OUTPUT(IO)       (LPC1768_PIN_PIN(IO) >= 0)
-
-// hg42: GET_TIMER is used only to check if it's a PWM pin
-// hg42: we cannot use USEABLE_HARDWARE_PWM because it uses a function that cannot be used statically
-// hg42: instead use PWM bit from the #define
-
-/// check if pin is a timer
-#define _GET_TIMER(IO)        true  // could be LPC1768_PIN_PWM(IO), but there
-// hg42: could be this:
-// #define _GET_TIMER(IO)        LPC1768_PIN_PWM(IO)
-// but this is an incomplete check (12 pins are PWMable, but only 6 can be used at the same time)
+#define _IS_OUTPUT(IO)        (LPC1768_PIN_PIN(IO) >= 0)
 
 /// Read a pin wrapper
 #define READ(IO)             _READ(IO)
@@ -112,12 +102,9 @@
 #define SET_PWM(IO)           SET_OUTPUT(IO)
 
 /// check if pin is an input wrapper
-#define GET_INPUT(IO)        _GET_INPUT(IO)
+#define IS_INPUT(IO)         _IS_INPUT(IO)
 /// check if pin is an output wrapper
-#define GET_OUTPUT(IO)       _GET_OUTPUT(IO)
-
-/// check if pin is a timer (wrapper)
-#define GET_TIMER(IO)        _GET_TIMER(IO)
+#define IS_OUTPUT(IO)        _IS_OUTPUT(IO)
 
 // Shorthand
 #define OUT_WRITE(IO,V)       do{ SET_OUTPUT(IO); WRITE(IO,V); }while(0)
@@ -125,5 +112,3 @@
 // digitalRead/Write wrappers
 #define extDigitalRead(IO)    digitalRead(IO)
 #define extDigitalWrite(IO,V) digitalWrite(IO,V)
-
-#define USEABLE_HARDWARE_PWM(P) PWM_PIN(P)
