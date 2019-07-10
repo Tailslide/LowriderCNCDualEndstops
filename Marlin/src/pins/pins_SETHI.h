@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
 /**
  * Sethi 3D_1 pin assignments - www.sethi3d.com.br
@@ -114,7 +115,7 @@
 
 // All these generations of Gen7 supply thermistor power
 // via PS_ON, so ignore bad thermistor readings
-#define BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
+//#define BOGUS_TEMPERATURE_GRACE_PERIOD 2000
 
 // our pin for debugging.
 #define DEBUG_PIN           0

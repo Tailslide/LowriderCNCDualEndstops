@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
 /**
  * STM32F407VET6 with RAMPS-like shield
@@ -32,12 +33,15 @@
   #error "Oops! Select an STM32F4 board in 'Tools > Board.'"
 #endif
 
+#ifndef BOARD_NAME
+  #define BOARD_NAME "Black STM32F4VET6"
+#endif
+
 #define DEFAULT_MACHINE_NAME "STM32F407VET6"
-//#define BOARD_NAME "Black STM32F4VET6"
 
 //#define I2C_EEPROM
-//#define E2END 0x1FFF // EEPROM end address (8kB)
-#define EEPROM_EMULATED_WITH_SRAM
+//#define E2END 0x1FFF // 8KB
+#define SRAM_EEPROM_EMULATION
 
 #if HOTENDS > 2 || E_STEPPERS > 2
   #error "Black STM32F4VET6 supports up to 2 hotends / E-steppers."

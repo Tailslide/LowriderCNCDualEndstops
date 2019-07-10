@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,18 +19,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
 #ifndef STM32F4
   #error "Oops! Select an STM32F4 board in 'Tools > Board.'"
 #endif
 
 #define RUMBA32_V1_0
-#define DEFAULT_MACHINE_NAME "RUMBA32"
-#define BOARD_NAME "RUMBA32"
+#define BOARD_NAME           "RUMBA32"
+#define DEFAULT_MACHINE_NAME BOARD_NAME
 
 //#define I2C_EEPROM
-
-#define E2END 0xFFF // EEPROM end address (4kB)
+#define E2END 0xFFF // 4KB
 
 #if HOTENDS > 3 || E_STEPPERS > 3
   #error "RUMBA32 supports up to 3 hotends / E-steppers."

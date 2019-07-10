@@ -1,7 +1,7 @@
 /**
  * Marlin 3D Printer Firmware
  *
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
  * Copyright (c) 2015-2016 Nico Tonnhofer wurstnase.reprap@gmail.com
  * Copyright (c) 2017 Victor Perez
@@ -28,10 +28,6 @@
   #define vsnprintf_P vsnprintf
 #endif
 
-// --------------------------------------------------------------------------
-// Includes
-// --------------------------------------------------------------------------
-
 #include "../shared/Marduino.h"
 #include "../shared/math_32bit.h"
 #include "../shared/HAL_SPI.h"
@@ -47,9 +43,9 @@
   #include <USBSerial.h>
 #endif
 
-// --------------------------------------------------------------------------
+// ------------------------
 // Defines
-// --------------------------------------------------------------------------
+// ------------------------
 
 //Serial override
 //extern HalSerial usb_serial;
@@ -136,27 +132,29 @@
 #undef pgm_read_ptr
 #define pgm_read_ptr(addr) (*(addr))
 
-// --------------------------------------------------------------------------
+// ------------------------
 // Types
-// --------------------------------------------------------------------------
+// ------------------------
 
 typedef int8_t pin_t;
 
 #define HAL_SERVO_LIB libServo
 
-// --------------------------------------------------------------------------
+// ------------------------
 // Public Variables
-// --------------------------------------------------------------------------
+// ------------------------
 
 /** result of last ADC conversion */
 extern uint16_t HAL_adc_result;
 
-// --------------------------------------------------------------------------
+// ------------------------
 // Public functions
-// --------------------------------------------------------------------------
+// ------------------------
 
 // Memory related
 #define __bss_end __bss_end__
+
+inline void HAL_init(void) { }
 
 /** clear reset reason */
 void HAL_clear_reset_source (void);

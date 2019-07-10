@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,18 +19,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
 #if !defined(STM32F7)
   #error "Oops! Select an STM32F7 board in 'Tools > Board.'"
 #endif
 
-#define DEFAULT_MACHINE_NAME "The-Borge"
-#define BOARD_NAME "The-Borge"
+#define BOARD_NAME           "The-Borge"
+#define DEFAULT_MACHINE_NAME BOARD_NAME
 
 #define E2END 0xFFF   // EEPROM end address
 
-// Ignore temp readings during develpment.
-#define BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
+// Ignore temp readings during development.
+//#define BOGUS_TEMPERATURE_GRACE_PERIOD 2000
 
 #if HOTENDS > 3 || E_STEPPERS > 3
   #error "The-Borg supports up to 3 hotends / E-steppers."

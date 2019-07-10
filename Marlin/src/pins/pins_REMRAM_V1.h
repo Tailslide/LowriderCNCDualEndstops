@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,15 +19,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
 #ifndef STM32F7xx
   #error "Oops! Select an STM32F7 board in 'Tools > Board.'"
 #endif
 
+#define BOARD_NAME           "RemRam v1"
 #define DEFAULT_MACHINE_NAME "RemRam"
-#define BOARD_NAME "RemRam v1"
 
-#define EEPROM_EMULATED_WITH_SRAM // Emulate the EEPROM using Backup SRAM
+#define SRAM_EEPROM_EMULATION // Emulate the EEPROM using Backup SRAM
 
 #if HOTENDS > 1 || E_STEPPERS > 1
   #error "RemRam supports only one hotend / E-stepper."

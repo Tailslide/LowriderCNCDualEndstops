@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
 #if !defined(__STM32F1__) && !defined(__STM32F4__)
   #error "Oops! Select an STM32F1/4 board in 'Tools > Board.'"
@@ -28,14 +29,14 @@
  * 2017 Victor Perez Marlin for stm32f1 test
  */
 
+#define BOARD_NAME           "Chitu3D"
 #define DEFAULT_MACHINE_NAME "STM32F103RET6"
-#define BOARD_NAME "Chitu3d Marlin"
 
 // Enable I2C_EEPROM for testing
 //#define I2C_EEPROM
 
-// Ignore temp readings during develpment.
-#define BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
+// Ignore temp readings during development.
+//#define BOGUS_TEMPERATURE_GRACE_PERIOD 2000
 
 //
 // Steppers
@@ -119,7 +120,7 @@
 //
 // LCD Pins
 //
-#if ENABLED(ULTRA_LCD)
+#if HAS_SPI_LCD
 
   #if ENABLED(REPRAPWORLD_GRAPHICAL_LCD)
     #define LCD_PINS_RS         49   // CS chip select /SS chip slave select
@@ -280,7 +281,7 @@
     #endif
   #endif // NEWPANEL
 
-#endif // ULTRA_LCD
+#endif // HAS_SPI_LCD
 
 #define U_MIN_PIN          -1
 #define V_MIN_PIN          -1

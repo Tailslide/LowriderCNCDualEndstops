@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,24 +19,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
 #ifndef STM32F4
   #error "Oops! Select an STM32F4 board in 'Tools > Board.'"
 #endif
 
-#ifndef ARMED_V1_0
-  #define ARMED_V1_1
-#endif
+#define ARMED_V1_1
 
-#define DEFAULT_MACHINE_NAME "Arm'ed"
-
-#undef BOARD_NAME
-#define BOARD_NAME "Arm'ed"
+#define BOARD_NAME           "Arm'ed"
+#define DEFAULT_MACHINE_NAME BOARD_NAME
 
 #define I2C_EEPROM
 
-#undef E2END
-#define E2END 0xFFF // EEPROM end address (4kB)
+#define E2END 0xFFF // 4KB
 
 #if HOTENDS > 2 || E_STEPPERS > 2
   #error "Arm'ed supports up to 2 hotends / E-steppers."
@@ -89,10 +85,10 @@
 #define E0_DIR_PIN         PB6
 #define E0_CS_PIN          PB4
 
-#ifdef ARMED_V1_0
-  #define E0_ENABLE_PIN    PB3
-#else
+#ifdef ARMED_V1_1
   #define E0_ENABLE_PIN    PC12
+#else
+  #define E0_ENABLE_PIN    PB3
 #endif
 
 #ifdef ARMED_SWAP_X_E1

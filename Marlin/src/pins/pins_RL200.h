@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,14 +19,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
 /**
  * Rapide Lite 200 v1 (RUMBA clone) pin assignments. Has slightly different assignment for
  * extruder motors due to dual Z motors. Pinout therefore based on pins_RUMBA.h.
  */
 
-#define DEFAULT_MACHINE_NAME "Rapide Lite 200"
 #define BOARD_NAME "RL200"
+#define DEFAULT_MACHINE_NAME "Rapide Lite 200"
 
 #if HOTENDS > 2 || E_STEPPERS > 2
   #error "RL200v1 supports up to 2 hotends / E-steppers. Comment out this line to continue."

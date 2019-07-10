@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
 /**
  * RUMBA pin assignments
@@ -32,11 +33,11 @@
   #error "RUMBA supports up to 3 hotends / E-steppers. Comment out this line to continue."
 #endif
 
-#ifndef DEFAULT_MACHINE_NAME
-  #define DEFAULT_MACHINE_NAME "Rumba"
-#endif
 #ifndef BOARD_NAME
   #define BOARD_NAME "Rumba"
+#endif
+#ifndef DEFAULT_MACHINE_NAME
+  #define DEFAULT_MACHINE_NAME BOARD_NAME
 #endif
 
 //

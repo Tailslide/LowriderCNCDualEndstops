@@ -1,7 +1,7 @@
 /**
  * Marlin 3D Printer Firmware
  *
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
  * Copyright (c) 2017 Victor Perez
  *
@@ -21,15 +21,11 @@
  */
 #pragma once
 
-// --------------------------------------------------------------------------
-// Includes
-// --------------------------------------------------------------------------
-
 #include <stdint.h>
 
-// --------------------------------------------------------------------------
+// ------------------------
 // Defines
-// --------------------------------------------------------------------------
+// ------------------------
 
 #define FORCE_INLINE __attribute__((always_inline)) inline
 
@@ -69,9 +65,9 @@ extern void TC7_Handler();
 #define HAL_STEP_TIMER_ISR()  void TC5_Handler()
 #define HAL_TEMP_TIMER_ISR()  void TC7_Handler()
 
-// --------------------------------------------------------------------------
+// ------------------------
 // Types
-// --------------------------------------------------------------------------
+// ------------------------
 
 typedef struct {
   TIM_HandleTypeDef timerdef;
@@ -79,15 +75,15 @@ typedef struct {
   uint32_t callback;
 } tTimerConfig;
 
-// --------------------------------------------------------------------------
+// ------------------------
 // Public Variables
-// --------------------------------------------------------------------------
+// ------------------------
 
 //extern const tTimerConfig timerConfig[];
 
-// --------------------------------------------------------------------------
+// ------------------------
 // Public functions
-// --------------------------------------------------------------------------
+// ------------------------
 
 void HAL_timer_start(const uint8_t timer_num, const uint32_t frequency);
 void HAL_timer_enable_interrupt(const uint8_t timer_num);
