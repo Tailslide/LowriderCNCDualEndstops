@@ -659,6 +659,13 @@ void idle(
     bool no_stepper_sleep/*=false*/
   #endif
 ) {
+
+  #if ENABLED(SPI_ENDSTOPS)
+    if (endstops.tmc_spi_homing.any && ELAPSED(millis(), sg_guard_period))
+      for (uint8_t i = 4; i--;) // Read SGT 4 times per idle loop
+        if (endstops.tmc_spi_homing_check()) break;
+  #endif
+
   #if ENABLED(MAX7219_DEBUG)
     max7219.idle_tasks();
   #endif
@@ -687,9 +694,12 @@ void idle(
 
   #if ENABLED(I2C_POSITION_ENCODERS)
     static millis_t i2cpem_next_update_ms;
-    if (planner.has_blocks_queued() && ELAPSED(millis(), i2cpem_next_update_ms)) {
-      I2CPEM.update();
-      i2cpem_next_update_ms = millis() + I2CPE_MIN_UPD_TIME_MS;
+    if (planner.has_blocks_queued()) {
+      const millis_t ms = millis();
+      if (ELAPSED(ms, i2cpem_next_update_ms)) {
+        I2CPEM.update();
+        i2cpem_next_update_ms = ms + I2CPE_MIN_UPD_TIME_MS;
+      }
     }
   #endif
 
