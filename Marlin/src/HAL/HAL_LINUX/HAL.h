@@ -56,7 +56,7 @@ uint8_t _getc();
 #include "../shared/HAL_SPI.h"
 #include "fastio.h"
 #include "watchdog.h"
-#include "HAL_timers.h"
+#include "timers.h"
 #include "serial.h"
 
 #define SHARED_SERVOS HAS_SERVOS
@@ -81,7 +81,10 @@ extern HalSerial usb_serial;
 inline void HAL_init(void) { }
 
 // Utility functions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 int freeMemory(void);
+#pragma GCC diagnostic pop
 
 // SPI: Extended functions which take a channel number (hardware SPI only)
 /** Write single byte to specified SPI channel */

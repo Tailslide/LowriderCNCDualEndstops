@@ -25,9 +25,9 @@
 #include "../shared/Marduino.h"
 #include "../shared/math_32bit.h"
 #include "../shared/HAL_SPI.h"
-#include "fastio_SAMD51.h"
-#include "watchdog_SAMD51.h"
-#include "HAL_timers_SAMD51.h"
+#include "fastio.h"
+#include "watchdog.h"
+#include "timers.h"
 
 #ifdef ADAFRUIT_GRAND_CENTRAL_M4
   #include "MarlinSerial_AGCM4.h"
@@ -132,11 +132,25 @@ void noTone(const pin_t _pin);
 
 // Enable hooks into idle and setup for HAL
 void HAL_init(void);
-/*#define HAL_IDLETASK 1
-void HAL_idletask(void);*/
+/*
+#define HAL_IDLETASK 1
+void HAL_idletask(void);
+*/
 
 //
 // Utility functions
 //
 FORCE_INLINE void _delay_ms(const int delay_ms) { delay(delay_ms); }
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 int freeMemory(void);
+#pragma GCC diagnostic pop
+
+#ifdef __cplusplus
+  extern "C" {
+#endif
+char *dtostrf(double __val, signed char __width, unsigned char __prec, char *__s);
+#ifdef __cplusplus
+  }
+#endif
