@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,7 +49,13 @@ GcodeSuite gcode;
 
 millis_t GcodeSuite::previous_move_ms;
 
-bool GcodeSuite::axis_relative_modes[] = AXIS_RELATIVE_MODES;
+static constexpr bool ar_init[XYZE] = AXIS_RELATIVE_MODES;
+uint8_t GcodeSuite::axis_relative = (
+    (ar_init[X_AXIS] ? _BV(REL_X) : 0)
+  | (ar_init[Y_AXIS] ? _BV(REL_Y) : 0)
+  | (ar_init[Z_AXIS] ? _BV(REL_Z) : 0)
+  | (ar_init[E_AXIS] ? _BV(REL_E) : 0)
+);
 
 #if ENABLED(HOST_KEEPALIVE_FEATURE)
   GcodeSuite::MarlinBusyState GcodeSuite::busy_state = NOT_BUSY;
@@ -72,15 +78,30 @@ bool GcodeSuite::axis_relative_modes[] = AXIS_RELATIVE_MODES;
 int8_t GcodeSuite::get_target_extruder_from_command() {
   if (parser.seenval('T')) {
     const int8_t e = parser.value_byte();
-    if (e >= EXTRUDERS) {
-      SERIAL_ECHO_START();
-      SERIAL_CHAR('M'); SERIAL_ECHO(parser.codenum);
-      SERIAL_ECHOLNPAIR(" " MSG_INVALID_EXTRUDER " ", int(e));
-      return -1;
-    }
-    return e;
+    if (e < EXTRUDERS) return e;
+    SERIAL_ECHO_START();
+    SERIAL_CHAR('M'); SERIAL_ECHO(parser.codenum);
+    SERIAL_ECHOLNPAIR(" " MSG_INVALID_EXTRUDER " ", int(e));
+    return -1;
   }
   return active_extruder;
+}
+
+/**
+ * Get the target e stepper from the T parameter
+ * Return -1 if the T parameter is out of range or unspecified
+ */
+int8_t GcodeSuite::get_target_e_stepper_from_command() {
+  const int8_t e = parser.intval('T', -1);
+  if (WITHIN(e, 0, E_STEPPERS - 1)) return e;
+
+  SERIAL_ECHO_START();
+  SERIAL_CHAR('M'); SERIAL_ECHO(parser.codenum);
+  if (e == -1)
+    SERIAL_ECHOLNPGM(" " MSG_E_STEPPER_NOT_SPECIFIED);
+  else
+    SERIAL_ECHOLNPAIR(" " MSG_INVALID_E_STEPPER " ", int(e));
+  return -1;
 }
 
 /**
@@ -95,17 +116,16 @@ void GcodeSuite::get_destination_from_command() {
   LOOP_XYZE(i) {
     if ( (seen[i] = parser.seenval(axis_codes[i])) ) {
       const float v = parser.value_axis_units((AxisEnum)i);
-      destination[i] = (axis_relative_modes[i] || relative_mode)
-        ? current_position[i] + v
-        : (i == E_AXIS) ? v : LOGICAL_TO_NATIVE(v, i);
+      destination[i] = axis_is_relative(AxisEnum(i)) ? current_position[i] + v : (i == E_AXIS) ? v : LOGICAL_TO_NATIVE(v, i);
     }
     else
       destination[i] = current_position[i];
   }
 
-  #if ENABLED(POWER_LOSS_RECOVERY)
+  #if ENABLED(POWER_LOSS_RECOVERY) && !PIN_EXISTS(POWER_LOSS)
     // Only update power loss recovery on moves with E
-    if (seen[E_AXIS] && (seen[X_AXIS] || seen[Y_AXIS]) && IS_SD_PRINTING()) recovery.save();
+    if (recovery.enabled && IS_SD_PRINTING() && seen[E_AXIS] && (seen[X_AXIS] || seen[Y_AXIS]))
+      recovery.save();
   #endif
 
   if (parser.linearval('F') > 0)
@@ -165,17 +185,13 @@ void GcodeSuite::dwell(millis_t time) {
 // Placeholders for non-migrated codes
 //
 #if ENABLED(M100_FREE_MEMORY_WATCHER)
-  extern void M100_dump_routine(PGM_P const title, const char *start, const char *end);
+  extern void M100_dump_routine(PGM_P const title, char *start, char *end);
 #endif
 
 /**
  * Process the parsed command and dispatch it to its handler
  */
-void GcodeSuite::process_parsed_command(
-  #if USE_EXECUTE_COMMANDS_IMMEDIATE
-    const bool no_ok
-  #endif
-) {
+void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
   KEEPALIVE_STATE(IN_HANDLER);
 
   // Handle a known G, M, or T
@@ -278,13 +294,13 @@ void GcodeSuite::process_parsed_command(
         case 58: G58(); break;
         case 59: G59(); break;
       #endif
-      
+
       #if ENABLED(GCODE_MOTION_MODES)
         case 80: G80(); break;                                    // G80: Reset the current motion mode
       #endif
 
-      case 90: relative_mode = false; break;                      // G90: Relative Mode
-      case 91: relative_mode = true; break;                       // G91: Absolute Mode
+      case 90: set_relative_mode(false); break;                   // G90: Absolute Mode
+      case 91: set_relative_mode(true);  break;                   // G91: Relative Mode
 
       case 92: G92(); break;                                      // G92: Set current axis position(s)
 
@@ -310,22 +326,36 @@ void GcodeSuite::process_parsed_command(
         case 1: M0_M1(); break;                                   // M1: Conditional stop - Wait for user button press on LCD
       #endif
 
-      #if ENABLED(SPINDLE_LASER_ENABLE)
-        case 3: M3_M4(false); break;                              // M3: turn spindle/laser on, set laser/spindle power/speed, set rotation direction CW
-        case 4: M3_M4(true ); break;                              // M4: turn spindle/laser on, set laser/spindle power/speed, set rotation direction CCW
-        case 5: M5(); break;                                      // M5 - turn spindle/laser off
+      #if HAS_CUTTER
+        case 3: M3_M4(false); break;                              // M3: Turn ON Laser | Spindle (clockwise), set Power | Speed
+        case 4: M3_M4(true ); break;                              // M4: Turn ON Laser | Spindle (counter-clockwise), set Power | Speed
+        case 5: M5(); break;                                      // M5: Turn OFF Laser | Spindle
+      #endif
+
+      #if ENABLED(COOLANT_CONTROL)
+        #if ENABLED(COOLANT_MIST)
+          case 7: M7(); break;                                    // M7: Mist coolant ON
+        #endif
+        #if ENABLED(COOLANT_FLOOD)
+          case 8: M8(); break;                                    // M8: Flood coolant ON
+        #endif
+        case 9: M9(); break;                                      // M9: Coolant OFF
       #endif
 
       #if ENABLED(EXTERNAL_CLOSED_LOOP_CONTROLLER)
         case 12: M12(); break;                                    // M12: Synchronize and optionally force a CLC set
       #endif
 
+      #if ENABLED(EXPECTED_PRINTER_CHECK)
+        case 16: M16(); break;                                    // M16: Expected printer check
+      #endif
+
       case 17: M17(); break;                                      // M17: Enable all stepper motors
 
       #if ENABLED(SDSUPPORT)
-        case 20: M20(); break;                                    // M20: list SD card
-        case 21: M21(); break;                                    // M21: init SD card
-        case 22: M22(); break;                                    // M22: release SD card
+        case 20: M20(); break;                                    // M20: List SD card
+        case 21: M21(); break;                                    // M21: Init SD card
+        case 22: M22(); break;                                    // M22: Release SD card
         case 23: M23(); break;                                    // M23: Select file
         case 24: M24(); break;                                    // M24: Start SD print
         case 25: M25(); break;                                    // M25: Pause SD print
@@ -374,17 +404,27 @@ void GcodeSuite::process_parsed_command(
         case 100: M100(); break;                                  // M100: Free Memory Report
       #endif
 
-      case 104: M104(); break;                                    // M104: Set hot end temperature
-      case 109: M109(); break;                                    // M109: Wait for hotend temperature to reach target
+      #if EXTRUDERS
+        case 104: M104(); break;                                  // M104: Set hot end temperature
+        case 109: M109(); break;                                  // M109: Wait for hotend temperature to reach target
+      #endif
+
+      case 105: M105(); return;                                   // M105: Report Temperatures (and say "ok")
+
+      #if FAN_COUNT > 0
+        case 106: M106(); break;                                  // M106: Fan On
+        case 107: M107(); break;                                  // M107: Fan Off
+      #endif
+
       case 110: M110(); break;                                    // M110: Set Current Line Number
       case 111: M111(); break;                                    // M111: Set debug level
 
       #if DISABLED(EMERGENCY_PARSER)
         case 108: M108(); break;                                  // M108: Cancel Waiting
-        case 112: M112(); break;                                  // M112: Emergency Stop
+        case 112: M112(); break;                                  // M112: Full Shutdown
         case 410: M410(); break;                                  // M410: Quickstop - Abort all the planned moves.
         #if ENABLED(HOST_PROMPT_SUPPORT)
-          case 876: M876(); break;                                  // M876: Handle Host prompt responses
+          case 876: M876(); break;                                // M876: Handle Host prompt responses
         #endif
       #else
         case 108: case 112: case 410:
@@ -408,15 +448,8 @@ void GcodeSuite::process_parsed_command(
         //case 191: M191(); break;                                // M191: Wait for chamber temperature to reach target
       #endif
 
-      case 105: M105(); KEEPALIVE_STATE(NOT_BUSY); return;        // M105: Report Temperatures (and say "ok")
-
       #if ENABLED(AUTO_REPORT_TEMPERATURES) && HAS_TEMP_SENSOR
         case 155: M155(); break;                                  // M155: Set temperature auto-report interval
-      #endif
-
-      #if FAN_COUNT > 0
-        case 106: M106(); break;                                  // M106: Fan On
-        case 107: M107(); break;                                  // M107: Fan Off
       #endif
 
       #if ENABLED(PARK_HEAD_ON_PAUSE)
@@ -455,7 +488,7 @@ void GcodeSuite::process_parsed_command(
       case 120: M120(); break;                                    // M120: Enable endstops
       case 121: M121(); break;                                    // M121: Disable endstops
 
-      #if HAS_LCD_MENU
+      #if HOTENDS && HAS_LCD_MENU
         case 145: M145(); break;                                  // M145: Set material heatup parameters
       #endif
 
@@ -527,7 +560,11 @@ void GcodeSuite::process_parsed_command(
       #endif
 
       case 220: M220(); break;                                    // M220: Set Feedrate Percentage: S<percent> ("FR" on your LCD)
-      case 221: M221(); break;                                    // M221: Set Flow Percentage
+
+      #if EXTRUDERS
+        case 221: M221(); break;                                  // M221: Set Flow Percentage
+      #endif
+
       case 226: M226(); break;                                    // M226: Wait until a pin reaches a state
 
       #if HAS_SERVOS
@@ -572,6 +609,10 @@ void GcodeSuite::process_parsed_command(
 
       #if HAS_PID_HEATING
         case 303: M303(); break;                                  // M303: PID autotune
+      #endif
+
+      #if HAS_USER_THERMISTORS
+        case 305: M305(); break;                                  // M305: Set user thermistor parameters
       #endif
 
       #if ENABLED(MORGAN_SCARA)
@@ -639,8 +680,12 @@ void GcodeSuite::process_parsed_command(
         case 524: M524(); break;                                   // M524: Abort the current SD print job
       #endif
 
-      #if ENABLED(ABORT_ON_ENDSTOP_HIT_FEATURE_ENABLED)
+      #if ENABLED(SD_ABORT_ON_ENDSTOP_HIT)
         case 540: M540(); break;                                  // M540: Set abort on endstop hit for SD printing
+      #endif
+
+      #if ENABLED(BAUD_RATE_GCODE)
+        case 575: M575(); break;                                  // M575: Set serial baudrate
       #endif
 
       #if HAS_BED_PROBE
@@ -770,12 +815,7 @@ void GcodeSuite::process_parsed_command(
     default: parser.unknown_command_error();
   }
 
-  KEEPALIVE_STATE(NOT_BUSY);
-
-  #if USE_EXECUTE_COMMANDS_IMMEDIATE
-    if (!no_ok)
-  #endif
-      ok_to_send();
+  if (!no_ok) queue.ok_to_send();
 }
 
 /**
@@ -783,16 +823,20 @@ void GcodeSuite::process_parsed_command(
  * This is called from the main loop()
  */
 void GcodeSuite::process_next_command() {
-  char * const current_command = command_queue[cmd_queue_index_r];
+  char * const current_command = queue.command_buffer[queue.index_r];
 
-  PORT_REDIRECT(command_queue_port[cmd_queue_index_r]);
+  PORT_REDIRECT(queue.port[queue.index_r]);
+
+  #if ENABLED(POWER_LOSS_RECOVERY)
+    recovery.queue_index_r = queue.index_r;
+  #endif
 
   if (DEBUGGING(ECHO)) {
     SERIAL_ECHO_START();
     SERIAL_ECHOLN(current_command);
-    #if ENABLED(M100_FREE_MEMORY_WATCHER)
-      SERIAL_ECHOPAIR("slot:", cmd_queue_index_r);
-      M100_dump_routine(PSTR("   Command Queue:"), (const char*)command_queue, (const char*)(command_queue + sizeof(command_queue)));
+    #if ENABLED(M100_FREE_MEMORY_DUMPER)
+      SERIAL_ECHOPAIR("slot:", queue.index_r);
+      M100_dump_routine(PSTR("   Command Queue:"), queue.command_buffer, queue.command_buffer + sizeof(queue.command_buffer));
     #endif
   }
 
@@ -801,43 +845,39 @@ void GcodeSuite::process_next_command() {
   process_parsed_command();
 }
 
-#if USE_EXECUTE_COMMANDS_IMMEDIATE
+/**
+ * Run a series of commands, bypassing the command queue to allow
+ * G-code "macros" to be called from within other G-code handlers.
+ */
 
-  /**
-   * Run a series of commands, bypassing the command queue to allow
-   * G-code "macros" to be called from within other G-code handlers.
-   */
-
-  void GcodeSuite::process_subcommands_now_P(PGM_P pgcode) {
-    char * const saved_cmd = parser.command_ptr;        // Save the parser state
-    for (;;) {
-      PGM_P const delim = strchr_P(pgcode, '\n');       // Get address of next newline
-      const size_t len = delim ? delim - pgcode : strlen_P(pgcode); // Get the command length
-      char cmd[len + 1];                                // Allocate a stack buffer
-      strncpy_P(cmd, pgcode, len);                      // Copy the command to the stack
-      cmd[len] = '\0';                                  // End with a nul
-      parser.parse(cmd);                                // Parse the command
-      process_parsed_command(true);                     // Process it
-      if (!delim) break;                                // Last command?
-      pgcode = delim + 1;                               // Get the next command
-    }
-    parser.parse(saved_cmd);                            // Restore the parser state
+void GcodeSuite::process_subcommands_now_P(PGM_P pgcode) {
+  char * const saved_cmd = parser.command_ptr;        // Save the parser state
+  for (;;) {
+    PGM_P const delim = strchr_P(pgcode, '\n');       // Get address of next newline
+    const size_t len = delim ? delim - pgcode : strlen_P(pgcode); // Get the command length
+    char cmd[len + 1];                                // Allocate a stack buffer
+    strncpy_P(cmd, pgcode, len);                      // Copy the command to the stack
+    cmd[len] = '\0';                                  // End with a nul
+    parser.parse(cmd);                                // Parse the command
+    process_parsed_command(true);                     // Process it
+    if (!delim) break;                                // Last command?
+    pgcode = delim + 1;                               // Get the next command
   }
+  parser.parse(saved_cmd);                            // Restore the parser state
+}
 
-  void GcodeSuite::process_subcommands_now(char * gcode) {
-    char * const saved_cmd = parser.command_ptr;        // Save the parser state
-    for (;;) {
-      char * const delim = strchr(gcode, '\n');         // Get address of next newline
-      if (delim) *delim = '\0';                         // Replace with nul
-      parser.parse(gcode);                              // Parse the current command
-      process_parsed_command(true);                     // Process it
-      if (!delim) break;                                // Last command?
-      gcode = delim + 1;                                // Get the next command
-    }
-    parser.parse(saved_cmd);                            // Restore the parser state
+void GcodeSuite::process_subcommands_now(char * gcode) {
+  char * const saved_cmd = parser.command_ptr;        // Save the parser state
+  for (;;) {
+    char * const delim = strchr(gcode, '\n');         // Get address of next newline
+    if (delim) *delim = '\0';                         // Replace with nul
+    parser.parse(gcode);                              // Parse the current command
+    process_parsed_command(true);                     // Process it
+    if (!delim) break;                                // Last command?
+    gcode = delim + 1;                                // Get the next command
   }
-
-#endif // USE_EXECUTE_COMMANDS_IMMEDIATE
+  parser.parse(saved_cmd);                            // Restore the parser state
+}
 
 #if ENABLED(HOST_KEEPALIVE_FEATURE)
 
