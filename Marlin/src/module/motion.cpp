@@ -439,12 +439,15 @@ void do_blocking_move_to_xy(const float &rx, const float &ry, const float &fr_mm
 //
 static float saved_feedrate_mm_s;
 static int16_t saved_feedrate_percentage;
-void setup_for_endstop_or_probe_move() {
+void remember_feedrate_and_scaling() {
   saved_feedrate_mm_s = feedrate_mm_s;
   saved_feedrate_percentage = feedrate_percentage;
+}
+void remember_feedrate_scaling_off() {
+  remember_feedrate_and_scaling();
   feedrate_percentage = 100;
 }
-void clean_up_after_endstop_or_probe_move() {
+void restore_feedrate_and_scaling() {
   feedrate_mm_s = saved_feedrate_mm_s;
   feedrate_percentage = saved_feedrate_percentage;
 }
@@ -1658,7 +1661,12 @@ void homeaxis(const AxisEnum axis) {
     ];
     if (backoff_mm) {
       current_position[axis] -= ABS(backoff_mm) * axis_home_dir;
-      line_to_current_position(Z_PROBE_SPEED_FAST);
+      line_to_current_position(
+        #if HOMING_Z_WITH_PROBE
+          (axis == Z_AXIS) ? MMM_TO_MMS(Z_PROBE_SPEED_FAST) :
+        #endif
+        homing_feedrate(axis)
+      );
     }
   #endif
 
