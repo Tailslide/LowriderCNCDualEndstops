@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,6 @@
 
 #include "../../inc/MarlinConfigPre.h"
 
-typedef struct {
-  int8_t x_index, y_index;
-  float distance; // When populated, the distance from the search location
-} mesh_index_pair;
-
 #if ENABLED(PROBE_MANUALLY)
   extern bool g29_in_progress;
 #else
@@ -46,9 +41,26 @@ void reset_bed_level();
   void _manual_goto_xy(const float &x, const float &y);
 #endif
 
+/**
+ * A class to save and change the bed leveling state,
+ * then restore it when it goes out of scope.
+ */
+class TemporaryBedLevelingState {
+  bool saved;
+  public:
+    TemporaryBedLevelingState(const bool enable);
+    ~TemporaryBedLevelingState() { set_bed_leveling_enabled(saved); }
+};
+#define TEMPORARY_BED_LEVELING_STATE(enable) const TemporaryBedLevelingState tbls(enable)
+
 #if HAS_MESH
 
-  typedef float (&bed_mesh_t)[GRID_MAX_POINTS_X][GRID_MAX_POINTS_Y];
+  typedef float bed_mesh_t[GRID_MAX_POINTS_X][GRID_MAX_POINTS_Y];
+
+  typedef struct {
+    int8_t x_index, y_index;
+    float distance; // When populated, the distance from the search location
+  } mesh_index_pair;
 
   #if ENABLED(AUTO_BED_LEVELING_BILINEAR)
     #include "abl/abl.h"

@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,10 +30,10 @@
 extern "C" void u8g_xMicroDelay(uint16_t val) {
   DELAY_US(val);
 }
-extern "C" void u8g_MicroDelay(void) {
+extern "C" void u8g_MicroDelay() {
   u8g_xMicroDelay(1);
 }
-extern "C" void u8g_10MicroDelay(void) {
+extern "C" void u8g_10MicroDelay() {
   u8g_xMicroDelay(10);
 }
 extern "C" void u8g_Delay(uint16_t val) {
