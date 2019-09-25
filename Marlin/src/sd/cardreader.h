@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,8 +39,9 @@ typedef struct {
   bool saving:1,
        logging:1,
        sdprinting:1,
-       detected:1,
+       mounted:1,
        filenameIsDir:1,
+       workDirIsRoot:1,
        abort_sd_printing:1
        #if ENABLED(BINARY_FILE_TRANSFER)
          , binary_mode:1
@@ -52,7 +53,7 @@ class CardReader {
 public:
   CardReader();
 
-  static void initsd();
+  static void mount();
   static void write_command(char *buf);
 
   static void beginautostart();
@@ -78,8 +79,8 @@ public:
     static void printLongPath(char *path);
   #endif
 
-  static void getfilename(uint16_t nr, const char* const match=NULL);
-  static uint16_t getnrfilenames();
+  static void getfilename(uint16_t nr, const char* const match=nullptr);
+  static uint16_t countFilesInWorkDir();
 
   static void getAbsFilename(char *t);
 
@@ -88,7 +89,7 @@ public:
   static int8_t updir();
   static void setroot();
 
-  static const char* diveToFile(SdFile*& curDir, const char * const path, const bool echo);
+  static const char* diveToFile(SdFile*& curDir, const char * const path, const bool echo=false);
 
   static uint16_t get_num_Files();
 
@@ -111,8 +112,8 @@ public:
   #endif
 
   static inline void pauseSDPrint() { flag.sdprinting = false; }
-  static inline bool isDetected() { return flag.detected; }
-  static inline bool isFileOpen() { return isDetected() && file.isOpen(); }
+  static inline bool isMounted() { return flag.mounted; }
+  static inline bool isFileOpen() { return isMounted() && file.isOpen(); }
   static inline bool isPaused() { return isFileOpen() && !flag.sdprinting; }
   static inline bool isPrinting() { return flag.sdprinting; }
   static inline bool eof() { return sdpos >= filesize; }
@@ -120,14 +121,14 @@ public:
   static inline void setIndex(const uint32_t index) { sdpos = index; file.seekSet(index); }
   static inline uint32_t getIndex() { return sdpos; }
   static inline uint8_t percentDone() { return (isFileOpen() && filesize) ? sdpos / ((filesize + 99) / 100) : 0; }
-  static inline char* getWorkDirName() { workDir.getFilename(filename); return filename; }
+  static inline char* getWorkDirName() { workDir.getDosName(filename); return filename; }
   static inline int16_t read(void* buf, uint16_t nbyte) { return file.isOpen() ? file.read(buf, nbyte) : -1; }
   static inline int16_t write(void* buf, uint16_t nbyte) { return file.isOpen() ? file.write(buf, nbyte) : -1; }
 
   static Sd2Card& getSd2Card() { return sd2card; }
 
   #if ENABLED(AUTO_REPORT_SD_STATUS)
-    static void auto_report_sd_status(void);
+    static void auto_report_sd_status();
     static inline void set_auto_report_interval(uint8_t v) {
       #if NUM_SERIAL > 1
         auto_report_port = serial_port_index;
@@ -144,6 +145,7 @@ public:
   static card_flags_t flag;
   static char filename[FILENAME_LENGTH], longFilename[LONG_FILENAME_LENGTH];
   static int8_t autostart_index;
+  static SdFile getroot() { return root; }
 
   #if ENABLED(BINARY_FILE_TRANSFER)
     #if NUM_SERIAL > 1
@@ -174,9 +176,11 @@ private:
     #endif
 
     #if BOTH(SDSORT_USES_RAM, SDSORT_CACHE_NAMES) && DISABLED(SDSORT_DYNAMIC_RAM)
-      #define SORTED_LONGNAME_MAXLEN ((SDSORT_CACHE_VFATS) * (FILENAME_LENGTH) + 1)
+      #define SORTED_LONGNAME_MAXLEN (SDSORT_CACHE_VFATS) * (FILENAME_LENGTH)
+      #define SORTED_LONGNAME_STORAGE (SORTED_LONGNAME_MAXLEN + 1)
     #else
       #define SORTED_LONGNAME_MAXLEN LONG_FILENAME_LENGTH
+      #define SORTED_LONGNAME_STORAGE SORTED_LONGNAME_MAXLEN
     #endif
 
     // Cache filenames to speed up SD menus.
@@ -188,10 +192,11 @@ private:
           static char **sortshort, **sortnames;
         #else
           static char sortshort[SDSORT_LIMIT][FILENAME_LENGTH];
-          static char sortnames[SDSORT_LIMIT][SORTED_LONGNAME_MAXLEN];
         #endif
-      #elif DISABLED(SDSORT_USES_STACK)
-        static char sortnames[SDSORT_LIMIT][SORTED_LONGNAME_MAXLEN];
+      #endif
+
+      #if (ENABLED(SDSORT_CACHE_NAMES) && DISABLED(SDSORT_DYNAMIC_RAM)) || NONE(SDSORT_CACHE_NAMES, SDSORT_USES_STACK)
+        static char sortnames[SDSORT_LIMIT][SORTED_LONGNAME_STORAGE];
       #endif
 
       // Folder sorting uses an isDir array when caching items.
@@ -224,7 +229,7 @@ private:
   static LsAction lsAction; //stored for recursion.
   static uint16_t nrFiles; //counter for the files in the current directory and recycled as position counter for getting the nrFiles'th name in the directory.
   static char *diveDirName;
-  static void lsDive(const char *prepend, SdFile parent, const char * const match=NULL);
+  static void lsDive(const char *prepend, SdFile parent, const char * const match=nullptr);
 
   #if ENABLED(SDCARD_SORT_ALPHA)
     static void flush_presort();

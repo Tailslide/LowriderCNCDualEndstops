@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
 /************
  * ui_api.h *
@@ -41,26 +42,49 @@
  *   location: <http://www.gnu.org/licenses/>.                              *
  ****************************************************************************/
 
-#pragma once
-
 #include "../../inc/MarlinConfig.h"
 
 namespace ExtUI {
 
+  #if ENABLED(JOYSTICK)
+    extern float norm_jog[];
+  #endif
+
+  // The ExtUI implementation can store up to this many bytes
+  // in the EEPROM when the methods onStoreSettings and
+  // onLoadSettings are called.
+
+  static constexpr size_t eeprom_data_size = 48;
+
   enum axis_t     : uint8_t { X, Y, Z };
   enum extruder_t : uint8_t { E0, E1, E2, E3, E4, E5 };
-  enum heater_t   : uint8_t { H0, H1, H2, H3, H4, H5, BED };
+  enum heater_t   : uint8_t { H0, H1, H2, H3, H4, H5, BED, CHAMBER };
   enum fan_t      : uint8_t { FAN0, FAN1, FAN2, FAN3, FAN4, FAN5 };
 
   constexpr uint8_t extruderCount = EXTRUDERS;
   constexpr uint8_t hotendCount   = HOTENDS;
   constexpr uint8_t fanCount      = FAN_COUNT;
 
+  #if HAS_MESH
+    typedef float bed_mesh_t[GRID_MAX_POINTS_X][GRID_MAX_POINTS_Y];
+  #endif
+
   bool isMoving();
   bool isAxisPositionKnown(const axis_t);
+  bool isAxisPositionKnown(const extruder_t);
+  bool isPositionKnown(); // Axis position guaranteed, steppers active since homing
+  bool isMachineHomed(); // Axis position most likely correct, steppers may have deactivated
   bool canMove(const axis_t);
   bool canMove(const extruder_t);
-  void enqueueCommands_P(PGM_P const);
+  void injectCommands_P(PGM_P const);
+  bool commandsInQueue();
+
+  bool isHeaterIdle(const heater_t);
+  bool isHeaterIdle(const extruder_t);
+  void enableHeater(const heater_t);
+  void enableHeater(const extruder_t);
+
+  void jog(float dx, float dy, float dz);
 
   /**
    * Getters and setters
@@ -79,7 +103,7 @@ namespace ExtUI {
     void  setAxisCurrent_mA(const float, const axis_t);
     void  setAxisCurrent_mA(const float, const extruder_t);
 
-    int getTMCBumpSensitivity(const axis_t);
+     int getTMCBumpSensitivity(const axis_t);
     void setTMCBumpSensitivity(const float, const axis_t);
   #endif
 
@@ -109,9 +133,10 @@ namespace ExtUI {
   #if HAS_LEVELING
     bool getLevelingActive();
     void setLevelingActive(const bool);
+    bool getMeshValid();
     #if HAS_MESH
-      bool getMeshValid();
-      bed_mesh_t getMeshArray();
+      bed_mesh_t& getMeshArray();
+      float getMeshPoint(const uint8_t xpos, const uint8_t ypos);
       void setMeshPoint(const uint8_t xpos, const uint8_t ypos, const float zval);
       void onMeshUpdate(const uint8_t xpos, const uint8_t ypos, const float zval);
     #endif
@@ -147,7 +172,7 @@ namespace ExtUI {
   void setRetractAcceleration_mm_s2(const float);
   void setTravelAcceleration_mm_s2(const float);
   void setFeedrate_percent(const float);
-  void setUserConfirmed(void);
+  void setUserConfirmed();
 
   #if ENABLED(LIN_ADVANCE)
     float getLinearAdvance_mm_mm_s(const extruder_t);
@@ -180,10 +205,8 @@ namespace ExtUI {
     void normalizeNozzleOffset(const axis_t axis);
   #endif
 
-  #if HAS_BED_PROBE
-    float getZOffset_mm();
-    void setZOffset_mm(const float);
-  #endif
+  float getZOffset_mm();
+  void setZOffset_mm(const float);
 
   #if ENABLED(BACKLASH_GCODE)
     float getAxisBacklash_mm(const axis_t);
@@ -202,7 +225,7 @@ namespace ExtUI {
     bool getFilamentRunoutEnabled();
     void setFilamentRunoutEnabled(const bool);
 
-    #if FILAMENT_RUNOUT_DISTANCE_MM > 0
+    #ifdef FILAMENT_RUNOUT_DISTANCE_MM
       float getFilamentRunoutDistance_mm();
       void setFilamentRunoutDistance_mm(const float);
     #endif
@@ -256,7 +279,7 @@ namespace ExtUI {
       void changeDir(const char * const dirname);
       void upDir();
       bool isAtRootDir();
-      uint16_t    count();
+      uint16_t count();
   };
 
   /**
@@ -278,8 +301,10 @@ namespace ExtUI {
   void onUserConfirmRequired(const char * const msg);
   void onStatusChanged(const char * const msg);
   void onFactoryReset();
-  void onStoreSettings();
-  void onLoadSettings();
+  void onStoreSettings(char *);
+  void onLoadSettings(const char *);
+  void onConfigurationStoreWritten(bool success);
+  void onConfigurationStoreRead(bool success);
 };
 
 /**
