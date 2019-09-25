@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
 /**
  * motion.h
@@ -26,12 +27,15 @@
  * High-level motion commands to feed the planner
  * Some of these methods may migrate to the planner class.
  */
-#pragma once
 
 #include "../inc/MarlinConfig.h"
 
 #if IS_SCARA
   #include "scara.h"
+#endif
+
+#if HAS_BED_PROBE
+  #include "probe.h"
 #endif
 
 // Axis homed and known-position states
@@ -41,6 +45,16 @@ FORCE_INLINE bool all_axes_homed() { return (axis_homed & xyz_bits) == xyz_bits;
 FORCE_INLINE bool all_axes_known() { return (axis_known_position & xyz_bits) == xyz_bits; }
 FORCE_INLINE void set_all_unhomed() { axis_homed = 0; }
 FORCE_INLINE void set_all_unknown() { axis_known_position = 0; }
+
+FORCE_INLINE bool homing_needed() {
+  return !(
+    #if ENABLED(HOME_AFTER_DEACTIVATE)
+      all_axes_known()
+    #else
+      all_axes_homed()
+    #endif
+  );
+}
 
 // Error margin to work around float imprecision
 constexpr float slop = 0.0001;
@@ -114,8 +128,10 @@ XYZ_DEFS(signed char, home_dir, HOME_DIR);
 #if HAS_HOTEND_OFFSET
   extern float hotend_offset[XYZ][HOTENDS];
   void reset_hotend_offsets();
-#else
+#elif HOTENDS > 0
   constexpr float hotend_offset[XYZ][HOTENDS] = { { 0 }, { 0 }, { 0 } };
+#else
+  constexpr float hotend_offset[XYZ][1] = { { 0 }, { 0 }, { 0 } };
 #endif
 
 typedef struct { float min, max; } axis_limits_t;
@@ -175,6 +191,7 @@ void prepare_move_to_destination();
  */
 void do_blocking_move_to(const float rx, const float ry, const float rz, const float &fr_mm_s=0);
 void do_blocking_move_to_x(const float &rx, const float &fr_mm_s=0);
+void do_blocking_move_to_y(const float &ry, const float &fr_mm_s=0);
 void do_blocking_move_to_z(const float &rz, const float &fr_mm_s=0);
 void do_blocking_move_to_xy(const float &rx, const float &ry, const float &fr_mm_s=0);
 
@@ -186,8 +203,9 @@ FORCE_INLINE void do_blocking_move_to(const float (&raw)[XYZE], const float &fr_
   do_blocking_move_to(raw[X_AXIS], raw[Y_AXIS], raw[Z_AXIS], fr_mm_s);
 }
 
-void setup_for_endstop_or_probe_move();
-void clean_up_after_endstop_or_probe_move();
+void remember_feedrate_and_scaling();
+void remember_feedrate_scaling_off();
+void restore_feedrate_and_scaling();
 
 //
 // Homing

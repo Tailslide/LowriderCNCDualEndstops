@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -73,7 +73,6 @@
 
   void _lcd_babystep(const AxisEnum axis, PGM_P const msg) {
     if (ui.use_click()) return ui.goto_previous_screen_no_defer();
-    ui.encoder_direction_normal();
     if (ui.encoderPosition) {
       const int16_t steps = int16_t(ui.encoderPosition) * (BABYSTEP_MULTIPLICATOR);
       ui.encoderPosition = 0;
@@ -145,7 +144,7 @@ void menu_tune() {
   //
   #if HOTENDS == 1
     MENU_MULTIPLIER_ITEM_EDIT_CALLBACK(int3, MSG_NOZZLE, &thermalManager.temp_hotend[0].target, 0, HEATER_0_MAXTEMP - 15, thermalManager.start_watching_E0);
-  #else // HOTENDS > 1
+  #elif HOTENDS > 1
     #define EDIT_NOZZLE(N) MENU_MULTIPLIER_ITEM_EDIT_CALLBACK(int3, MSG_NOZZLE MSG_LCD_N##N, &thermalManager.temp_hotend[N].target, 0, HEATER_##N##_MAXTEMP - 15, thermalManager.start_watching_E##N)
     EDIT_NOZZLE(0);
     EDIT_NOZZLE(1);
