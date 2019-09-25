@@ -35,11 +35,15 @@ MMU2 mmu2;
 #include "../../libs/nozzle.h"
 #include "../../module/temperature.h"
 #include "../../module/planner.h"
-#include "../../module/stepper_indirection.h"
+#include "../../module/stepper/indirection.h"
 #include "../../Marlin.h"
 
 #if ENABLED(HOST_PROMPT_SUPPORT)
   #include "../../feature/host_actions.h"
+#endif
+
+#if ENABLED(EXTENSIBLE_UI)
+  #include "../../lcd/extensible_ui/ui_api.h"
 #endif
 
 #define DEBUG_OUT ENABLED(MMU2_DEBUG)
@@ -529,7 +533,7 @@ void MMU2::command(const uint8_t mmu_cmd) {
 /**
  * Wait for response from MMU
  */
-bool MMU2::get_response(void) {
+bool MMU2::get_response() {
   while (cmd != MMU_CMD_NONE) idle();
 
   while (!ready) {
@@ -573,7 +577,7 @@ void MMU2::manage_response(const bool move_axes, const bool turn_off_nozzle) {
         COPY(resume_position, current_position);
 
         if (move_axes && all_axes_homed())
-          Nozzle::park(2, park_point /*= NOZZLE_PARK_POINT*/);
+          nozzle.park(2, park_point /*= NOZZLE_PARK_POINT*/);
 
         if (turn_off_nozzle) thermalManager.setTargetHotend(0, active_extruder);
 
@@ -694,8 +698,6 @@ void MMU2::filament_runout() {
     }
 
     LCD_MESSAGEPGM(MSG_MMU2_EJECTING_FILAMENT);
-    const bool saved_e_relative_mode = gcode.axis_relative_modes[E_AXIS];
-    gcode.axis_relative_modes[E_AXIS] = true;
 
     enable_E0();
     current_position[E_AXIS] -= MMU2_FILAMENTCHANGE_EJECT_FEED;
@@ -710,6 +712,9 @@ void MMU2::filament_runout() {
       wait_for_user = true;
       #if ENABLED(HOST_PROMPT_SUPPORT)
         host_prompt_do(PROMPT_USER_CONTINUE, PSTR("MMU2 Eject Recover"), PSTR("Continue"));
+      #endif
+      #if ENABLED(EXTENSIBLE_UI)
+        ExtUI::onUserConfirmRequired(PSTR("MMU2 Eject Recover"));
       #endif
       while (wait_for_user) idle();
       BUZZ(200, 404);
@@ -727,8 +732,6 @@ void MMU2::filament_runout() {
     set_runout_valid(false);
 
     BUZZ(200, 404);
-
-    gcode.axis_relative_modes[E_AXIS] = saved_e_relative_mode;
 
     disable_E0();
 
@@ -777,9 +780,6 @@ void MMU2::filament_runout() {
     planner.synchronize();
     enable_E0();
 
-    const bool saved_e_relative_mode = gcode.axis_relative_modes[E_AXIS];
-    gcode.axis_relative_modes[E_AXIS] = true;
-
     const E_Step* step = sequence;
 
     for (uint8_t i = 0; i < steps; i++) {
@@ -796,8 +796,6 @@ void MMU2::filament_runout() {
 
       step++;
     }
-
-    gcode.axis_relative_modes[E_AXIS] = saved_e_relative_mode;
 
     disable_E0();
   }

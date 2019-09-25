@@ -28,7 +28,7 @@
 
 #define CPU_32_BIT
 
-void HAL_init(void);
+void HAL_init();
 
 #include <stdint.h>
 #include <stdarg.h>
@@ -41,7 +41,7 @@ extern "C" volatile uint32_t _millis;
 #include "../shared/HAL_SPI.h"
 #include "fastio.h"
 #include "watchdog.h"
-#include "HAL_timers.h"
+#include "timers.h"
 #include "MarlinSerial.h"
 
 #include <adc.h>
@@ -111,18 +111,10 @@ extern "C" volatile uint32_t _millis;
 //
 // Utility functions
 //
-int freeMemory(void);
-
-//
-// SPI: Extended functions taking a channel number (Hardware SPI only)
-//
-
-// Write single byte to specified SPI channel
-void spiSend(uint32_t chan, byte b);
-// Write buffer to specified SPI channel
-void spiSend(uint32_t chan, const uint8_t* buf, size_t n);
-// Read single byte from specified SPI channel
-uint8_t spiRec(uint32_t chan);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+int freeMemory();
+#pragma GCC diagnostic pop
 
 //
 // ADC API
@@ -133,7 +125,7 @@ uint8_t spiRec(uint32_t chan);
                                     // Memory usage per ADC channel (bytes): (6 * ADC_MEDIAN_FILTER_SIZE) + 16
                                     // 8 * ((6 * 23) + 16 ) = 1232 Bytes for 8 channels
 
-#define ADC_LOWPASS_K_VALUE    (6)  // Higher values increase rise time
+#define ADC_LOWPASS_K_VALUE    (2)  // Higher values increase rise time
                                     // Rise time sample delays for 100% signal convergence on full range step
                                     // (1 : 13, 2 : 32, 3 : 67, 4 : 139, 5 : 281, 6 : 565, 7 : 1135, 8 : 2273)
                                     // K = 6, 565 samples, 500Hz sample rate, 1.13s convergence on full range step
@@ -146,16 +138,13 @@ using FilteredADC = LPC176x::ADC<ADC_LOWPASS_K_VALUE, ADC_MEDIAN_FILTER_SIZE>;
 #define HAL_READ_ADC()         FilteredADC::get_result()
 #define HAL_ADC_READY()        FilteredADC::finished_conversion()
 
-// A grace period to allow ADC readings to stabilize, preventing false alarms
-#define THERMAL_PROTECTION_GRACE_PERIOD 1000
-
 // Parse a G-code word into a pin index
 int16_t PARSED_PIN_INDEX(const char code, const int16_t dval);
 // P0.6 thru P0.9 are for the onboard SD card
 #define HAL_SENSITIVE_PINS P0_06, P0_07, P0_08, P0_09
 
 #define HAL_IDLETASK 1
-void HAL_idletask(void);
+void HAL_idletask();
 
 #define PLATFORM_M997_SUPPORT
 void flashFirmware(int16_t value);

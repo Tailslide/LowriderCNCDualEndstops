@@ -77,7 +77,9 @@
         ui.synchronize(PSTR(MSG_LEVEL_BED_DONE));
       #endif
       ui.goto_previous_screen_no_defer();
-      ui.completion_feedback();
+      #if HAS_BUZZER
+        ui.completion_feedback();
+      #endif
     }
     if (ui.should_draw()) draw_menu_item_static(LCD_HEIGHT >= 4 ? 1 : 0, PSTR(MSG_LEVEL_BED_DONE));
     ui.refresh(LCDVIEW_CALL_REDRAW_NEXT);
@@ -89,7 +91,6 @@
   // Step 7: Get the Z coordinate, click goes to the next point or exits
   //
   void _lcd_level_bed_get_z() {
-    ui.encoder_direction_normal();
 
     if (ui.use_click()) {
 
@@ -278,7 +279,7 @@ void menu_bed_leveling() {
   #if ENABLED(BABYSTEP_ZPROBE_OFFSET)
     MENU_ITEM(submenu, MSG_ZPROBE_ZOFFSET, lcd_babystep_zoffset);
   #elif HAS_BED_PROBE
-    MENU_ITEM_EDIT(float52, MSG_ZPROBE_ZOFFSET, &zprobe_zoffset, Z_PROBE_OFFSET_RANGE_MIN, Z_PROBE_OFFSET_RANGE_MAX);
+    MENU_ITEM_EDIT(float52, MSG_ZPROBE_ZOFFSET, &probe_offset[Z_AXIS], Z_PROBE_OFFSET_RANGE_MIN, Z_PROBE_OFFSET_RANGE_MAX);
   #endif
 
   #if ENABLED(LEVEL_BED_CORNERS)

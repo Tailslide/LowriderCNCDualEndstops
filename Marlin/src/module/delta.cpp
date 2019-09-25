@@ -43,7 +43,7 @@
 
 #if ENABLED(SENSORLESS_HOMING)
   #include "../feature/tmc_util.h"
-  #include "stepper_indirection.h"
+  #include "stepper/indirection.h"
 #endif
 
 #define DEBUG_OUT ENABLED(DEBUG_LEVELING_FEATURE)
@@ -101,12 +101,8 @@ void recalc_delta_settings() {
  */
 
 #define DELTA_DEBUG(VAR) do { \
-    SERIAL_ECHOPAIR("cartesian X:", VAR[X_AXIS]); \
-    SERIAL_ECHOPAIR(" Y:", VAR[Y_AXIS]);          \
-    SERIAL_ECHOLNPAIR(" Z:", VAR[Z_AXIS]);        \
-    SERIAL_ECHOPAIR("delta A:", delta[A_AXIS]);   \
-    SERIAL_ECHOPAIR(" B:", delta[B_AXIS]);        \
-    SERIAL_ECHOLNPAIR(" C:", delta[C_AXIS]);      \
+    SERIAL_ECHOLNPAIR("Cartesian X", VAR[X_AXIS], " Y", VAR[Y_AXIS], " Z", VAR[Z_AXIS]);   \
+    SERIAL_ECHOLNPAIR("Delta A", delta[A_AXIS], " B", delta[B_AXIS], " C", delta[C_AXIS]); \
   }while(0)
 
 void inverse_kinematics(const float (&raw)[XYZ]) {
@@ -227,16 +223,17 @@ void home_delta() {
 
   // Disable stealthChop if used. Enable diag1 pin on driver.
   #if ENABLED(SENSORLESS_HOMING)
-    sensorless_t stealth_states { false, false, false, false, false, false, false };
-    stealth_states.x = tmc_enable_stallguard(stepperX);
-    stealth_states.y = tmc_enable_stallguard(stepperY);
-    stealth_states.z = tmc_enable_stallguard(stepperZ);
+    sensorless_t stealth_states {
+      tmc_enable_stallguard(stepperX),
+      tmc_enable_stallguard(stepperY),
+      tmc_enable_stallguard(stepperZ)
+    };
   #endif
 
   // Move all carriages together linearly until an endstop is hit.
   destination[Z_AXIS] = (delta_height
     #if HAS_BED_PROBE
-      - zprobe_zoffset
+      - probe_offset[Z_AXIS]
     #endif
     + 10);
   buffer_line_to_destination(homing_feedrate(X_AXIS));

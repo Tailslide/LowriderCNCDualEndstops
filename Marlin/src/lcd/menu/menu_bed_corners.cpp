@@ -62,10 +62,10 @@ static inline void _lcd_goto_next_corner() {
       current_position[Y_AXIS] = Y_MIN_BED + LEVEL_CORNERS_INSET;
       break;
     case 1:
-      current_position[X_AXIS] = X_MAX_BED - LEVEL_CORNERS_INSET;
+      current_position[X_AXIS] = X_MAX_BED - (LEVEL_CORNERS_INSET);
       break;
     case 2:
-      current_position[Y_AXIS] = Y_MAX_BED - LEVEL_CORNERS_INSET;
+      current_position[Y_AXIS] = Y_MAX_BED - (LEVEL_CORNERS_INSET);
       break;
     case 3:
       current_position[X_AXIS] = X_MIN_BED + LEVEL_CORNERS_INSET;
@@ -111,7 +111,7 @@ static inline void _lcd_level_bed_corners_homing() {
   if (all_axes_homed()) {
     bed_corner = 0;
     ui.goto_screen(menu_level_bed_corners);
-    set_ui_selection(true);
+    ui.set_selection(true);
     _lcd_goto_next_corner();
   }
 }

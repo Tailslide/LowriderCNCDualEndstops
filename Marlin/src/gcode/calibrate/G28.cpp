@@ -39,9 +39,7 @@
   #include "../../feature/tmc_util.h"
 #endif
 
-#if HOMING_Z_WITH_PROBE || ENABLED(BLTOUCH)
-  #include "../../module/probe.h"
-#endif
+#include "../../module/probe.h"
 
 #if ENABLED(BLTOUCH)
   #include "../../feature/bltouch.h"
@@ -78,15 +76,19 @@
                 fr_mm_s = _MIN(homing_feedrate(X_AXIS), homing_feedrate(Y_AXIS)) * SQRT(sq(mlratio) + 1.0);
 
     #if ENABLED(SENSORLESS_HOMING)
-      sensorless_t stealth_states { false, false, false, false, false, false, false };
-      stealth_states.x = tmc_enable_stallguard(stepperX);
-      stealth_states.y = tmc_enable_stallguard(stepperY);
-      #if AXIS_HAS_STALLGUARD(X2)
-        stealth_states.x2 = tmc_enable_stallguard(stepperX2);
-      #endif
-      #if AXIS_HAS_STALLGUARD(Y2)
-        stealth_states.y2 = tmc_enable_stallguard(stepperY2);
-      #endif
+      sensorless_t stealth_states {
+          tmc_enable_stallguard(stepperX)
+        , tmc_enable_stallguard(stepperY)
+        , false
+        , false
+          #if AXIS_HAS_STALLGUARD(X2)
+            || tmc_enable_stallguard(stepperX2)
+          #endif
+        , false
+          #if AXIS_HAS_STALLGUARD(Y2)
+            || tmc_enable_stallguard(stepperY2)
+          #endif
+      };
     #endif
 
     do_blocking_move_to_xy(1.5 * mlx * x_axis_home_dir, 1.5 * mly * home_dir(Y_AXIS), fr_mm_s);
@@ -120,7 +122,7 @@
       return;
     }
 
-    if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("Z_SAFE_HOMING >>>");
+    if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("home_z_safely >>>");
 
     sync_plan_position();
 
@@ -132,13 +134,13 @@
     destination[Z_AXIS] = current_position[Z_AXIS]; // Z is already at the right height
 
     #if HOMING_Z_WITH_PROBE
-      destination[X_AXIS] -= X_PROBE_OFFSET_FROM_EXTRUDER;
-      destination[Y_AXIS] -= Y_PROBE_OFFSET_FROM_EXTRUDER;
+      destination[X_AXIS] -= probe_offset[X_AXIS];
+      destination[Y_AXIS] -= probe_offset[Y_AXIS];
     #endif
 
     if (position_is_reachable(destination[X_AXIS], destination[Y_AXIS])) {
 
-      if (DEBUGGING(LEVELING)) DEBUG_POS("Z_SAFE_HOMING", destination);
+      if (DEBUGGING(LEVELING)) DEBUG_POS("home_z_safely", destination);
 
       // This causes the carriage on Dual X to unpark
       #if ENABLED(DUAL_X_CARRIAGE)
@@ -157,7 +159,7 @@
       SERIAL_ECHO_MSG(MSG_ZPROBE_OUT);
     }
 
-    if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("<<< Z_SAFE_HOMING");
+    if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("<<< home_z_safely");
   }
 
 #endif // Z_SAFE_HOMING
@@ -229,6 +231,22 @@ void GcodeSuite::G28(const bool always_home_all) {
     workspace_plane = PLANE_XY;
   #endif
 
+  #if ENABLED(IMPROVE_HOMING_RELIABILITY)
+    slow_homing_t slow_homing { 0 };
+    slow_homing.acceleration.x = planner.settings.max_acceleration_mm_per_s2[X_AXIS];
+    slow_homing.acceleration.y = planner.settings.max_acceleration_mm_per_s2[Y_AXIS];
+    planner.settings.max_acceleration_mm_per_s2[X_AXIS] = 100;
+    planner.settings.max_acceleration_mm_per_s2[Y_AXIS] = 100;
+    #if HAS_CLASSIC_JERK
+      slow_homing.jerk.x = planner.max_jerk[X_AXIS];
+      slow_homing.jerk.y = planner.max_jerk[Y_AXIS];
+      planner.max_jerk[X_AXIS] = 0;
+      planner.max_jerk[Y_AXIS] = 0;
+    #endif
+
+    planner.reset_acceleration_rates();
+  #endif
+
   // Always home with tool 0 active
   #if HOTENDS > 1
     #if DISABLED(DELTA) || ENABLED(DELTA_HOME_TO_SAFE_ZONE)
@@ -241,7 +259,7 @@ void GcodeSuite::G28(const bool always_home_all) {
     extruder_duplication_enabled = false;
   #endif
 
-  setup_for_endstop_or_probe_move();
+  remember_feedrate_scaling_off();
 
   endstops.enable(true); // Enable endstops for next homing move
 
@@ -391,16 +409,12 @@ void GcodeSuite::G28(const bool always_home_all) {
 
   #endif // DUAL_X_CARRIAGE
 
-  #ifdef HOMING_BACKOFF_MM
-    endstops.enable(false);
-    constexpr float endstop_backoff[XYZ] = HOMING_BACKOFF_MM;
-    const float backoff_x = doX ? ABS(endstop_backoff[X_AXIS]) * (X_HOME_DIR) : 0,
-                backoff_y = doY ? ABS(endstop_backoff[Y_AXIS]) * (Y_HOME_DIR) : 0,
-                backoff_z = doZ ? ABS(endstop_backoff[Z_AXIS]) * (Z_HOME_DIR) : 0;
-    if (backoff_z) do_blocking_move_to_z(current_position[Z_AXIS] - backoff_z);
-    if (backoff_x || backoff_y) do_blocking_move_to_xy(current_position[X_AXIS] - backoff_x, current_position[Y_AXIS] - backoff_y);
-  #endif
   endstops.not_homing();
+
+  // Clear endstop state for polled stallGuard endstops
+  #if ENABLED(SPI_ENDSTOPS)
+    endstops.clear_endstop_state();
+  #endif
 
   #if BOTH(DELTA, DELTA_HOME_TO_SAFE_ZONE)
     // move to a height where we can use the full xy-area
@@ -411,7 +425,7 @@ void GcodeSuite::G28(const bool always_home_all) {
     set_bed_leveling_enabled(leveling_was_active);
   #endif
 
-  clean_up_after_endstop_or_probe_move();
+  restore_feedrate_and_scaling();
 
   // Restore the active tool after homing
   #if HOTENDS > 1 && (DISABLED(DELTA) || ENABLED(DELTA_HOME_TO_SAFE_ZONE))
@@ -423,9 +437,21 @@ void GcodeSuite::G28(const bool always_home_all) {
     tool_change(old_tool_index, NO_FETCH);
   #endif
 
+  #if ENABLED(IMPROVE_HOMING_RELIABILITY)
+    planner.settings.max_acceleration_mm_per_s2[X_AXIS] = slow_homing.acceleration.x;
+    planner.settings.max_acceleration_mm_per_s2[Y_AXIS] = slow_homing.acceleration.y;
+    #if HAS_CLASSIC_JERK
+      planner.max_jerk[X_AXIS] = slow_homing.jerk.x;
+      planner.max_jerk[Y_AXIS] = slow_homing.jerk.y;
+    #endif
+
+    planner.reset_acceleration_rates();
+  #endif
+
   ui.refresh();
 
   report_current_position();
+
   #if ENABLED(NANODLP_Z_SYNC)
     #if ENABLED(NANODLP_ALL_AXIS)
       #define _HOME_SYNC true       // For any axis, output sync text.

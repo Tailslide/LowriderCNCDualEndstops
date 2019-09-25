@@ -42,9 +42,19 @@
   #include "../../feature/host_actions.h"
 #endif
 
+#if ENABLED(EXTENSIBLE_UI)
+  #include "../../lcd/extensible_ui/ui_api.h"
+#endif
+
 #ifndef GET_PIN_MAP_PIN_M43
   #define GET_PIN_MAP_PIN_M43(Q) GET_PIN_MAP_PIN(Q)
 #endif
+
+inline void _watchdog_reset() {
+  #if ENABLED(USE_WATCHDOG)
+    watchdog_reset();
+  #endif
+}
 
 inline void toggle_pins() {
   const bool ignore_protection = parser.boolval('I');
@@ -61,7 +71,7 @@ inline void toggle_pins() {
       SERIAL_EOL();
     }
     else {
-      watchdog_reset();
+      _watchdog_reset();
       report_pin_state_extended(pin, ignore_protection, true, "Pulsing   ");
       #if AVR_AT90USB1286_FAMILY // Teensy IDEs don't know about these pins so must use FASTIO
         if (pin == TEENSY_E2) {
@@ -85,10 +95,10 @@ inline void toggle_pins() {
       {
         pinMode(pin, OUTPUT);
         for (int16_t j = 0; j < repeat; j++) {
-          watchdog_reset(); extDigitalWrite(pin, 0); safe_delay(wait);
-          watchdog_reset(); extDigitalWrite(pin, 1); safe_delay(wait);
-          watchdog_reset(); extDigitalWrite(pin, 0); safe_delay(wait);
-          watchdog_reset();
+          _watchdog_reset(); extDigitalWrite(pin, 0); safe_delay(wait);
+          _watchdog_reset(); extDigitalWrite(pin, 1); safe_delay(wait);
+          _watchdog_reset(); extDigitalWrite(pin, 0); safe_delay(wait);
+          _watchdog_reset();
         }
       }
     }
@@ -328,6 +338,9 @@ void GcodeSuite::M43() {
       wait_for_user = true;
       #if ENABLED(HOST_PROMPT_SUPPORT)
         host_prompt_do(PROMPT_USER_CONTINUE, PSTR("M43 Wait Called"), PSTR("Continue"));
+      #endif
+      #if ENABLED(EXTENSIBLE_UI)
+        ExtUI::onUserConfirmRequired(PSTR("M43 Wait Called"));
       #endif
     #endif
 

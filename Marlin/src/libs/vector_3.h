@@ -40,8 +40,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#pragma once
-
 class matrix_3x3;
 
 struct vector_3 {
@@ -54,6 +52,10 @@ struct vector_3 {
 
   vector_3 operator+(const vector_3 &v);
   vector_3 operator-(const vector_3 &v);
+
+  vector_3  operator* (const float &v);
+  vector_3& operator*=(const float &v);
+
   void normalize();
   float get_length() const;
   vector_3 get_normal() const;

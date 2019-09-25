@@ -168,7 +168,7 @@ int8_t g26_prime_flag;
    */
   bool user_canceled() {
     if (!ui.button_pressed()) return false; // Return if the button isn't pressed
-    ui.set_status_P(PSTR("Mesh Validation Stopped."), 99);
+    ui.set_status_P(PSTR(MSG_G26_CANCELED), 99);
     #if HAS_LCD_MENU
       ui.quick_feedback();
     #endif
@@ -385,8 +385,8 @@ inline bool turn_on_heaters() {
   #if HAS_HEATED_BED
 
     if (g26_bed_temp > 25) {
-      #if ENABLED(ULTRA_LCD)
-        ui.set_status_P(PSTR("G26 Heating Bed."), 99);
+      #if HAS_SPI_LCD
+        ui.set_status_P(PSTR(MSG_G26_HEATING_BED), 99);
         ui.quick_feedback();
         #if HAS_LCD_MENU
           ui.capture();
@@ -406,8 +406,8 @@ inline bool turn_on_heaters() {
   #endif // HAS_HEATED_BED
 
   // Start heating the active nozzle
-  #if ENABLED(ULTRA_LCD)
-    ui.set_status_P(PSTR("G26 Heating Nozzle."), 99);
+  #if HAS_SPI_LCD
+    ui.set_status_P(PSTR(MSG_G26_HEATING_NOZZLE), 99);
     ui.quick_feedback();
   #endif
   thermalManager.setTargetHotend(g26_hotend_temp, active_extruder);
@@ -420,7 +420,7 @@ inline bool turn_on_heaters() {
     )
   ) return G26_ERR;
 
-  #if ENABLED(ULTRA_LCD)
+  #if HAS_SPI_LCD
     ui.reset_status();
     ui.quick_feedback();
   #endif
@@ -441,7 +441,7 @@ inline bool prime_nozzle() {
     if (g26_prime_flag == -1) {  // The user wants to control how much filament gets purged
 
       ui.capture();
-      ui.set_status_P(PSTR("User-Controlled Prime"), 99);
+      ui.set_status_P(PSTR(MSG_G26_MANUAL_PRIME), 99);
       ui.chirp();
 
       set_destination_from_current();
@@ -465,15 +465,15 @@ inline bool prime_nozzle() {
 
       ui.wait_for_release();
 
-      ui.set_status_P(PSTR("Done Priming"), 99);
+      ui.set_status_P(PSTR(MSG_G26_PRIME_DONE), 99);
       ui.quick_feedback();
       ui.release();
     }
     else
   #endif
   {
-    #if ENABLED(ULTRA_LCD)
-      ui.set_status_P(PSTR("Fixed Length Prime."), 99);
+    #if HAS_SPI_LCD
+      ui.set_status_P(PSTR(MSG_G26_FIXED_LENGTH), 99);
       ui.quick_feedback();
     #endif
     set_destination_from_current();
@@ -484,12 +484,6 @@ inline bool prime_nozzle() {
   }
 
   return G26_OK;
-}
-
-float valid_trig_angle(float d) {
-  while (d > 360.0) d -= 360.0;
-  while (d < 0.0) d += 360.0;
-  return d;
 }
 
 /**
@@ -852,7 +846,7 @@ void GcodeSuite::G26() {
   } while (--g26_repeats && location.x_index >= 0 && location.y_index >= 0);
 
   LEAVE:
-  ui.set_status_P(PSTR("Leaving G26"), -1);
+  ui.set_status_P(PSTR(MSG_G26_LEAVING), -1);
 
   retract_filament(destination);
   destination[Z_AXIS] = Z_CLEARANCE_BETWEEN_PROBES;

@@ -382,13 +382,26 @@
   #error "Replace POWER_SUPPLY 2 by enabling PSU_CONTROL and setting PSU_ACTIVE_HIGH to 'true'."
 #elif defined(POWER_SUPPLY)
   #error "POWER_SUPPLY is now obsolete. Please remove it from Configuration.h."
+#elif defined(MKS_ROBIN_TFT)
+  #error "MKS_ROBIN_TFT is now FSMC_GRAPHICAL_TFT. Please update your configuration."
+#elif defined(SDPOWER)
+  #error "SDPOWER is now SDPOWER_PIN. Please update your configuration and/or pins."
+#elif defined(STRING_SPLASH_LINE1) || defined(STRING_SPLASH_LINE2)
+  #error "STRING_SPLASH_LINE[12] are now obsolete. Please remove them from Configuration.h."
+#elif defined(Z_PROBE_ALLEN_KEY_DEPLOY_1_X) || defined(Z_PROBE_ALLEN_KEY_STOW_1_X)
+  #error "Z_PROBE_ALLEN_KEY_(DEPLOY|STOW) coordinates are now a single setting. Please update your configuration."
+#elif defined(X_PROBE_OFFSET_FROM_EXTRUDER) || defined(Y_PROBE_OFFSET_FROM_EXTRUDER) || defined(Z_PROBE_OFFSET_FROM_EXTRUDER)
+  #error "[XYZ]_PROBE_OFFSET_FROM_EXTRUDER is now NOZZLE_TO_PROBE_OFFSET. Please update your configuration."
+#elif defined(MIN_PROBE_X) || defined(MIN_PROBE_Y) || defined(MAX_PROBE_X) || defined(MAX_PROBE_Y)
+  #error "(MIN|MAX)_PROBE_[XY] are now calculated at runtime. Please remove them from Configuration.h."
 #endif
 
-#define BOARD_MKS_13        -1109
-#define BOARD_TRIGORILLA    -1131
-#define BOARD_RURAMPS4D     -3020
-#define BOARD_FORMBOT_TREX2 -1125
-#define BOARD_BIQU_SKR_V1_1 -2014
+#define BOARD_MKS_13        -1000
+#define BOARD_TRIGORILLA    -1001
+#define BOARD_RURAMPS4D     -1002
+#define BOARD_FORMBOT_TREX2 -1003
+#define BOARD_BIQU_SKR_V1_1 -1004
+#define BOARD_STM32F1R      -1005
 #if MB(MKS_13)
   #error "BOARD_MKS_13 has been renamed BOARD_MKS_GEN_13. Please update your configuration."
 #elif MB(TRIGORILLA)
@@ -397,14 +410,17 @@
   #error "BOARD_RURAMPS4D has been renamed BOARD_RURAMPS4D_11. Please update your configuration."
 #elif MB(FORMBOT_TREX2)
   #error "FORMBOT_TREX2 has been renamed BOARD_FORMBOT_TREX2PLUS. Please update your configuration."
-#elif MB(BOARD_BIQU_SKR_V1_1)
-  #error "BIQU_SKR_V1_1 has been renamed BOARD_BIGTREE_SKR_V1_1. Please update your configuration."
+#elif MB(BIQU_SKR_V1_1)
+  #error "BOARD_BIQU_SKR_V1_1 has been renamed BOARD_BIGTREE_SKR_V1_1. Please update your configuration."
+#elif MB(STM32F1R)
+  #error "BOARD_STM32F1R has been renamed BOARD_STM32F103R. Please update your configuration."
 #endif
 #undef BOARD_MKS_13
 #undef BOARD_TRIGORILLA
 #undef BOARD_RURAMPS4D
 #undef BOARD_FORMBOT_TREX2
 #undef BOARD_BIQU_SKR_V1_1
+#undef BOARD_STM32F1R
 
 /**
  * Marlin release, version and default string
@@ -494,14 +510,12 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
   #endif
 #endif
 
-#if !defined(TARGET_LPC1768) && ( \
-     ENABLED(ENDSTOPPULLDOWNS) \
-  || ENABLED(ENDSTOPPULLDOWN_XMAX) \
-  || ENABLED(ENDSTOPPULLDOWN_YMAX) \
-  || ENABLED(ENDSTOPPULLDOWN_ZMAX) \
-  || ENABLED(ENDSTOPPULLDOWN_XMIN) \
-  || ENABLED(ENDSTOPPULLDOWN_YMIN) \
-  || ENABLED(ENDSTOPPULLDOWN_ZMIN) )
+#if !defined(TARGET_LPC1768) && ANY( \
+    ENDSTOPPULLDOWNS, \
+    ENDSTOPPULLDOWN_XMAX, ENDSTOPPULLDOWN_YMAX, \
+    ENDSTOPPULLDOWN_ZMAX, ENDSTOPPULLDOWN_XMIN, \
+    ENDSTOPPULLDOWN_YMIN, ENDSTOPPULLDOWN_ZMIN \
+  )
   #error "PULLDOWN pin mode is not available on the selected board."
 #endif
 
@@ -553,10 +567,14 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
   #error "LCD_SET_PROGRESS_MANUALLY requires LCD_PROGRESS_BAR, Graphical LCD, or EXTENSIBLE_UI."
 #endif
 
+#if !HAS_LCD_MENU && ENABLED(SD_REPRINT_LAST_SELECTED_FILE)
+  #error "SD_REPRINT_LAST_SELECTED_FILE currently requires a Marlin-native LCD menu."
+#endif
+
 /**
  * Custom Boot and Status screens
  */
-#if DISABLED(DOGLCD) && EITHER(SHOW_CUSTOM_BOOTSCREEN, CUSTOM_STATUS_SCREEN_IMAGE)
+#if EITHER(SHOW_CUSTOM_BOOTSCREEN, CUSTOM_STATUS_SCREEN_IMAGE) && !HAS_GRAPHICAL_LCD
   #error "Graphical LCD is required for SHOW_CUSTOM_BOOTSCREEN and CUSTOM_STATUS_SCREEN_IMAGE."
 #endif
 
@@ -602,7 +620,7 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
  * I2C Position Encoders
  */
 #if ENABLED(I2C_POSITION_ENCODERS)
-  #if DISABLED(BABYSTEPPING) || DISABLED(BABYSTEP_XY)
+  #if !BOTH(BABYSTEPPING, BABYSTEP_XY)
     #error "I2C_POSITION_ENCODERS requires BABYSTEPPING and BABYSTEP_XY."
   #elif !WITHIN(I2CPE_ENCODER_CNT, 1, 5)
     #error "I2CPE_ENCODER_CNT must be between 1 and 5."
@@ -621,7 +639,7 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
     #error "MESH_BED_LEVELING and BABYSTEP_ZPROBE_OFFSET is not a valid combination"
   #elif ENABLED(BABYSTEP_ZPROBE_OFFSET) && !HAS_BED_PROBE
     #error "BABYSTEP_ZPROBE_OFFSET requires a probe."
-  #elif ENABLED(BABYSTEP_ZPROBE_GFX_OVERLAY) && DISABLED(DOGLCD)
+  #elif ENABLED(BABYSTEP_ZPROBE_GFX_OVERLAY) && !HAS_GRAPHICAL_LCD
     #error "BABYSTEP_ZPROBE_GFX_OVERLAY requires a Graphical LCD."
   #elif ENABLED(BABYSTEP_ZPROBE_GFX_OVERLAY) && DISABLED(BABYSTEP_ZPROBE_OFFSET)
     #error "BABYSTEP_ZPROBE_GFX_OVERLAY requires a BABYSTEP_ZPROBE_OFFSET."
@@ -823,7 +841,7 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
  */
 #if ENABLED(MIXING_EXTRUDER)
   #if EXTRUDERS > 1
-    #error "MIXING_EXTRUDER currently only supports one extruder."
+    #error "For MIXING_EXTRUDER set MIXING_STEPPERS > 1 instead of EXTRUDERS > 1."
   #elif MIXING_STEPPERS < 2
     #error "You must set MIXING_STEPPERS >= 2 for a mixing extruder."
   #elif ENABLED(FILAMENT_SENSOR)
@@ -888,7 +906,7 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
  * Switching Toolhead requirements
  */
 #if ENABLED(SWITCHING_TOOLHEAD)
-  #if !defined(SWITCHING_TOOLHEAD_SERVO_NR)
+  #ifndef SWITCHING_TOOLHEAD_SERVO_NR
     #error "SWITCHING_TOOLHEAD requires SWITCHING_TOOLHEAD_SERVO_NR."
   #elif EXTRUDERS < 2
     #error "SWITCHING_TOOLHEAD requires at least 2 EXTRUDERS."
@@ -909,12 +927,11 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
   #endif
 #endif
 
-#if ANY(MAGNETIC_SWITCHING_TOOLHEAD, ELECTROMAGNETIC_SWITCHING_TOOLHEAD)
-  #if ENABLED(EXT_SOLENOID)
-    #error "(ELECTRO)MAGNETIC_SWITCHING_TOOLHEAD and EXT_SOLENOID are incompatible. (Pins are used twice.)"
-  #elif !PIN_EXISTS(SOL0)
-    #error "(ELECTRO)MAGNETIC_SWITCHING_TOOLHEAD requires SOL0_PIN."
-  #elif !defined(SWITCHING_TOOLHEAD_Y_POS)
+/**
+ * (Electro)magnetic Switching Toolhead requirements
+ */
+#if EITHER(MAGNETIC_SWITCHING_TOOLHEAD, ELECTROMAGNETIC_SWITCHING_TOOLHEAD)
+  #ifndef SWITCHING_TOOLHEAD_Y_POS
     #error "(ELECTRO)MAGNETIC_SWITCHING_TOOLHEAD requires SWITCHING_TOOLHEAD_Y_POS"
   #elif !defined(SWITCHING_TOOLHEAD_X_POS)
     #error "(ELECTRO)MAGNETIC_SWITCHING_TOOLHEAD requires SWITCHING_TOOLHEAD_X_POS"
@@ -922,6 +939,12 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
     #error "(ELECTRO)MAGNETIC_SWITCHING_TOOLHEAD requires SWITCHING_TOOLHEAD_Z_HOP."
   #elif !defined(SWITCHING_TOOLHEAD_Y_CLEAR)
     #error "(ELECTRO)MAGNETIC_SWITCHING_TOOLHEAD requires SWITCHING_TOOLHEAD_Y_CLEAR."
+  #elif ENABLED(ELECTROMAGNETIC_SWITCHING_TOOLHEAD)
+    #if ENABLED(EXT_SOLENOID)
+      #error "(ELECTRO)MAGNETIC_SWITCHING_TOOLHEAD and EXT_SOLENOID are incompatible. (Pins are used twice.)"
+    #elif !PIN_EXISTS(SOL0)
+      #error "(ELECTRO)MAGNETIC_SWITCHING_TOOLHEAD requires SOL0_PIN."
+    #endif
   #endif
 #endif
 
@@ -953,7 +976,7 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
 /**
  * Required LCD language
  */
-#if DISABLED(DOGLCD) && ENABLED(ULTRA_LCD) && !defined(DISPLAY_CHARSET_HD44780)
+#if HAS_CHARACTER_LCD && !defined(DISPLAY_CHARSET_HD44780)
   #error "You must set DISPLAY_CHARSET_HD44780 to JAPANESE, WESTERN or CYRILLIC for your LCD controller."
 #endif
 
@@ -1003,6 +1026,13 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
 #endif
 
 /**
+ * Junction deviation is not compatible with kinematic systems.
+ */
+#if ENABLED(JUNCTION_DEVIATION) && IS_KINEMATIC
+  #error "Junction deviation is only compatible with Cartesians."
+#endif
+
+/**
  * Probes
  */
 
@@ -1018,14 +1048,12 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
   + ENABLED(SOLENOID_PROBE) \
   + ENABLED(Z_PROBE_ALLEN_KEY) \
   + ENABLED(Z_PROBE_SLED) \
-  + ENABLED(RACK_AND_PINION_PROBE)
-  #error "Please enable only one probe option: PROBE_MANUALLY, FIX_MOUNTED_PROBE, BLTOUCH, TOUCH_MI_PROBE, SOLENOID_PROBE, Z_PROBE_ALLEN_KEY, Z_PROBE_SLED, or Z Servo."
+  + ENABLED(RACK_AND_PINION_PROBE) \
+  + ENABLED(SENSORLESS_PROBING)
+  #error "Please enable only one probe option: PROBE_MANUALLY, SENSORLESS_PROBING, BLTOUCH, FIX_MOUNTED_PROBE, TOUCH_MI_PROBE, SOLENOID_PROBE, Z_PROBE_ALLEN_KEY, Z_PROBE_SLED, or Z Servo."
 #endif
 
 #if HAS_BED_PROBE
-
-  static_assert(FLOOR(float(X_PROBE_OFFSET_FROM_EXTRUDER)) == float(X_PROBE_OFFSET_FROM_EXTRUDER), "X_PROBE_OFFSET_FROM_EXTRUDER must be an integer!");
-  static_assert(FLOOR(float(Y_PROBE_OFFSET_FROM_EXTRUDER)) == float(Y_PROBE_OFFSET_FROM_EXTRUDER), "Y_PROBE_OFFSET_FROM_EXTRUDER must be an integer!");
 
   /**
    * Z_PROBE_SLED is incompatible with DELTA
@@ -1092,6 +1120,8 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
       #error "TOUCH_MI_PROBE requires Z_MIN_PROBE_ENDSTOP_INVERTING to be set to false."
     #elif DISABLED(BABYSTEP_ZPROBE_OFFSET)
       #error "TOUCH_MI_PROBE requires BABYSTEPPING with BABYSTEP_ZPROBE_OFFSET."
+    #elif !HAS_RESUME_CONTINUE
+      #error "TOUCH_MI_PROBE currently requires an LCD controller or EMERGENCY_PARSER."
     #endif
   #endif
 
@@ -1176,14 +1206,18 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
  * Bed Leveling Requirements
  */
 
-#if EITHER(AUTO_BED_LEVELING_UBL, AUTO_BED_LEVELING_3POINT)
-  static_assert(WITHIN(PROBE_PT_1_X, MIN_PROBE_X, MAX_PROBE_X), "PROBE_PT_1_X is outside the probe region.");
-  static_assert(WITHIN(PROBE_PT_2_X, MIN_PROBE_X, MAX_PROBE_X), "PROBE_PT_2_X is outside the probe region.");
-  static_assert(WITHIN(PROBE_PT_3_X, MIN_PROBE_X, MAX_PROBE_X), "PROBE_PT_3_X is outside the probe region.");
-  static_assert(WITHIN(PROBE_PT_1_Y, MIN_PROBE_Y, MAX_PROBE_Y), "PROBE_PT_1_Y is outside the probe region.");
-  static_assert(WITHIN(PROBE_PT_2_Y, MIN_PROBE_Y, MAX_PROBE_Y), "PROBE_PT_2_Y is outside the probe region.");
-  static_assert(WITHIN(PROBE_PT_3_Y, MIN_PROBE_Y, MAX_PROBE_Y), "PROBE_PT_3_Y is outside the probe region.");
-#endif
+//
+// !! TODO: REPLACE WITH TESTS IN THE 3-POINT LEVELING CODE !!
+//
+
+//#if EITHER(AUTO_BED_LEVELING_UBL, AUTO_BED_LEVELING_3POINT)
+//  static_assert(WITHIN(PROBE_PT_1_X, PROBE_X_MIN, PROBE_X_MAX), "PROBE_PT_1_X is outside the probe region.");
+//  static_assert(WITHIN(PROBE_PT_2_X, PROBE_X_MIN, PROBE_X_MAX), "PROBE_PT_2_X is outside the probe region.");
+//  static_assert(WITHIN(PROBE_PT_3_X, PROBE_X_MIN, PROBE_X_MAX), "PROBE_PT_3_X is outside the probe region.");
+//  static_assert(WITHIN(PROBE_PT_1_Y, PROBE_Y_MIN, PROBE_Y_MAX), "PROBE_PT_1_Y is outside the probe region.");
+//  static_assert(WITHIN(PROBE_PT_2_Y, PROBE_Y_MIN, PROBE_Y_MAX), "PROBE_PT_2_Y is outside the probe region.");
+//  static_assert(WITHIN(PROBE_PT_3_Y, PROBE_Y_MIN, PROBE_Y_MAX), "PROBE_PT_3_Y is outside the probe region.");
+//#endif
 
 #if ENABLED(AUTO_BED_LEVELING_UBL)
 
@@ -1217,20 +1251,6 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
     #error "SCARA machines can only use the AUTO_BED_LEVELING_BILINEAR leveling option."
   #endif
 
-  /**
-   * Check auto bed leveling probe points
-   */
-  #if ABL_GRID
-
-    static_assert(LEFT_PROBE_BED_POSITION < RIGHT_PROBE_BED_POSITION, "LEFT_PROBE_BED_POSITION must be less than RIGHT_PROBE_BED_POSITION.");
-    static_assert(FRONT_PROBE_BED_POSITION < BACK_PROBE_BED_POSITION, "FRONT_PROBE_BED_POSITION must be less than BACK_PROBE_BED_POSITION.");
-    static_assert(LEFT_PROBE_BED_POSITION >= MIN_PROBE_X, "LEFT_PROBE_BED_POSITION is outside the probe region.");
-    static_assert(RIGHT_PROBE_BED_POSITION <= MAX_PROBE_X, "RIGHT_PROBE_BED_POSITION is outside the probe region.");
-    static_assert(FRONT_PROBE_BED_POSITION >= MIN_PROBE_Y, "FRONT_PROBE_BED_POSITION is outside the probe region.");
-    static_assert(BACK_PROBE_BED_POSITION <= MAX_PROBE_Y, "BACK_PROBE_BED_POSITION is outside the probe region.");
-
-  #endif
-
 #elif ENABLED(MESH_BED_LEVELING)
 
   // Hide PROBE_MANUALLY from the rest of the code
@@ -1256,7 +1276,7 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
   #error "G26_MESH_VALIDATION requires MESH_BED_LEVELING, AUTO_BED_LEVELING_BILINEAR, or AUTO_BED_LEVELING_UBL."
 #endif
 
-#if ENABLED(MESH_EDIT_GFX_OVERLAY) && (DISABLED(AUTO_BED_LEVELING_UBL) || DISABLED(DOGLCD))
+#if ENABLED(MESH_EDIT_GFX_OVERLAY) && !(ENABLED(AUTO_BED_LEVELING_UBL) && HAS_GRAPHICAL_LCD)
   #error "MESH_EDIT_GFX_OVERLAY requires AUTO_BED_LEVELING_UBL and a Graphical LCD."
 #endif
 
@@ -1299,8 +1319,11 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
  */
 #if ENABLED(Z_SAFE_HOMING)
   #if HAS_BED_PROBE
-    static_assert(WITHIN(Z_SAFE_HOMING_X_POINT, MIN_PROBE_X, MAX_PROBE_X), "Z_SAFE_HOMING_X_POINT is outside the probe region.");
-    static_assert(WITHIN(Z_SAFE_HOMING_Y_POINT, MIN_PROBE_Y, MAX_PROBE_Y), "Z_SAFE_HOMING_Y_POINT is outside the probe region.");
+    //
+    // !! TODO: REPLACE WITH TESTS IN THE Z_SAFE_HOMING CODE !!
+    //
+    //static_assert(WITHIN(Z_SAFE_HOMING_X_POINT, PROBE_X_MIN, PROBE_X_MAX), "Z_SAFE_HOMING_X_POINT is outside the probe region.");
+    //static_assert(WITHIN(Z_SAFE_HOMING_Y_POINT, PROBE_Y_MIN, PROBE_Y_MAX), "Z_SAFE_HOMING_Y_POINT is outside the probe region.");
   #else
     static_assert(WITHIN(Z_SAFE_HOMING_X_POINT, X_MIN_POS, X_MAX_POS), "Z_SAFE_HOMING_X_POINT can't be reached by the nozzle.");
     static_assert(WITHIN(Z_SAFE_HOMING_Y_POINT, Y_MIN_POS, Y_MAX_POS), "Z_SAFE_HOMING_Y_POINT can't be reached by the nozzle.");
@@ -1454,8 +1477,8 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
   #error "E0_STEP_PIN or E0_DIR_PIN not defined for this board."
 #elif ( !(defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)) && (!PIN_EXISTS(E0_STEP, E0_DIR) || !HAS_E0_ENABLE))
   #error "E0_STEP_PIN, E0_DIR_PIN, or E0_ENABLE_PIN not defined for this board."
-#elif TEMP_SENSOR_0 == 0
-  #error "TEMP_SENSOR_0 is required."
+#elif EXTRUDERS && TEMP_SENSOR_0 == 0
+  #error "TEMP_SENSOR_0 is required with any extruders."
 #endif
 
 // Pins are required for heaters
@@ -1563,7 +1586,7 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
  * LED Backlight Timeout
  */
 #if defined(LED_BACKLIGHT_TIMEOUT) && !(EITHER(FYSETC_MINI_12864_2_0, FYSETC_MINI_12864_2_1) && HAS_POWER_SWITCH)
-  #error "LED_BACKLIGHT_TIMEOUT requires a Fysetc Mini Panel and a Power Switch."
+  #error "LED_BACKLIGHT_TIMEOUT requires a FYSETC Mini Panel and a Power Switch."
 #endif
 
 /**
@@ -1834,75 +1857,69 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
 
 /**
  * Make sure only one display is enabled
- *
- * Note: BQ_LCD_SMART_CONTROLLER => REPRAP_DISCOUNT_FULL_GRAPHIC_SMART_CONTROLLER
- *       REPRAP_DISCOUNT_FULL_GRAPHIC_SMART_CONTROLLER => REPRAP_DISCOUNT_SMART_CONTROLLER
- *       SAV_3DGLCD => U8GLIB_SH1106 => ULTIMAKERCONTROLLER
- *       MKS_12864OLED => U8GLIB_SH1106 => ULTIMAKERCONTROLLER
- *       MKS_12864OLED_SSD1306 => U8GLIB_SSD1306 => ULTIMAKERCONTROLLER
- *       MKS_MINI_12864 => MINIPANEL
- *       miniVIKI => ULTIMAKERCONTROLLER
- *       VIKI2 => ULTIMAKERCONTROLLER
- *       ELB_FULL_GRAPHIC_CONTROLLER => ULTIMAKERCONTROLLER
- *       AZSMZ_12864 => ULTIMAKERCONTROLLER
- *       PANEL_ONE => ULTIMAKERCONTROLLER
  */
 #if 1 < 0 \
-  + (     ENABLED(ULTIMAKERCONTROLLER) \
-      && DISABLED(SAV_3DGLCD) \
-      && DISABLED(miniVIKI) \
-      && DISABLED(VIKI2) \
-      && DISABLED(ELB_FULL_GRAPHIC_CONTROLLER) \
-      && DISABLED(AZSMZ_12864) \
-      && DISABLED(PANEL_ONE) \
-      && DISABLED(MKS_12864OLED) \
-      && DISABLED(MKS_12864OLED_SSD1306) ) \
-  + (     ENABLED(REPRAP_DISCOUNT_SMART_CONTROLLER) \
-      && DISABLED(REPRAP_DISCOUNT_FULL_GRAPHIC_SMART_CONTROLLER) \
-      && DISABLED(LCD_FOR_MELZI) \
-      && DISABLED(MAKEBOARD_MINI_2_LINE_DISPLAY_1602) \
-      && DISABLED(MKS_12864OLED) \
-      && DISABLED(MKS_12864OLED_SSD1306) ) \
-  + (ENABLED(REPRAP_DISCOUNT_FULL_GRAPHIC_SMART_CONTROLLER) && DISABLED(BQ_LCD_SMART_CONTROLLER)) \
-  + ENABLED(LCD_FOR_MELZI) \
-  + ENABLED(MKS_12864OLED) \
-  + ENABLED(MKS_12864OLED_SSD1306) \
-  + ENABLED(MAKEBOARD_MINI_2_LINE_DISPLAY_1602) \
-  + ENABLED(CARTESIO_UI) \
-  + ENABLED(PANEL_ONE) \
-  + ENABLED(MAKRPANEL) \
-  + ENABLED(REPRAPWORLD_GRAPHICAL_LCD) \
-  + ENABLED(VIKI2) \
-  + ENABLED(miniVIKI) \
-  + ENABLED(ELB_FULL_GRAPHIC_CONTROLLER) \
-  + ENABLED(AZSMZ_12864) \
-  + ENABLED(G3D_PANEL) \
+  + (ENABLED(REPRAP_DISCOUNT_SMART_CONTROLLER) && DISABLED(IS_RRD_SC)) \
+  + (ENABLED(REPRAP_DISCOUNT_FULL_GRAPHIC_SMART_CONTROLLER) && DISABLED(IS_RRD_FG_SC)) \
+  + (ENABLED(ULTRA_LCD) && DISABLED(IS_ULTRA_LCD)) \
+  + (ENABLED(U8GLIB_SSD1306) && DISABLED(IS_U8GLIB_SSD1306)) \
   + (ENABLED(MINIPANEL) && DISABLED(MKS_MINI_12864)) \
-  + ENABLED(MKS_MINI_12864) \
-  + ENABLED(FYSETC_MINI_12864_X_X) \
-  + ENABLED(FYSETC_MINI_12864_1_2) \
-  + ENABLED(FYSETC_MINI_12864_2_0) \
-  + ENABLED(FYSETC_MINI_12864_2_1) \
-  + (ENABLED(REPRAPWORLD_KEYPAD) && NONE(CARTESIO_UI, ZONESTAR_LCD)) \
+  + (ENABLED(REPRAPWORLD_KEYPAD) && DISABLED(IS_RRW_KEYPAD)) \
+  + (ENABLED(EXTENSIBLE_UI) && DISABLED(IS_EXTUI)) \
+  + (ENABLED(ULTIPANEL) && DISABLED(IS_ULTIPANEL)) \
+  + ENABLED(RADDS_DISPLAY) \
+  + ENABLED(ULTIMAKERCONTROLLER) \
+  + ENABLED(PANEL_ONE) \
+  + ENABLED(G3D_PANEL) \
   + ENABLED(RIGIDBOT_PANEL) \
+  + ENABLED(MAKEBOARD_MINI_2_LINE_DISPLAY_1602) \
+  + ENABLED(ZONESTAR_LCD) \
   + ENABLED(RA_CONTROL_PANEL) \
   + ENABLED(LCD_SAINSMART_I2C_1602) \
   + ENABLED(LCD_SAINSMART_I2C_2004) \
   + ENABLED(LCM1602) \
   + ENABLED(LCD_I2C_PANELOLU2) \
   + ENABLED(LCD_I2C_VIKI) \
-  + (ENABLED(U8GLIB_SSD1306) && NONE(OLED_PANEL_TINYBOY2, MKS_12864OLED_SSD1306)) \
   + ENABLED(SAV_3DLCD) \
+  + ENABLED(FF_INTERFACEBOARD) \
+  + ENABLED(REPRAPWORLD_GRAPHICAL_LCD) \
+  + ENABLED(VIKI2) \
+  + ENABLED(miniVIKI) \
+  + ENABLED(MAKRPANEL) \
+  + ENABLED(ELB_FULL_GRAPHIC_CONTROLLER) \
   + ENABLED(BQ_LCD_SMART_CONTROLLER) \
+  + ENABLED(CARTESIO_UI) \
+  + ENABLED(LCD_FOR_MELZI) \
+  + ENABLED(ULTI_CONTROLLER) \
+  + ENABLED(MKS_MINI_12864) \
+  + ENABLED(FYSETC_MINI_12864_X_X) \
+  + ENABLED(FYSETC_MINI_12864_1_2) \
+  + ENABLED(FYSETC_MINI_12864_2_0) \
+  + ENABLED(FYSETC_MINI_12864_2_1) \
+  + ENABLED(CR10_STOCKDISPLAY) \
+  + ENABLED(ANET_FULL_GRAPHICS_LCD) \
+  + ENABLED(AZSMZ_12864) \
+  + ENABLED(SILVER_GATE_GLCD_CONTROLLER) \
   + ENABLED(SAV_3DGLCD) \
   + ENABLED(OLED_PANEL_TINYBOY2) \
-  + ENABLED(ZONESTAR_LCD) \
-  + ENABLED(ULTI_CONTROLLER) \
-  + ENABLED(MALYAN_LCD) \
+  + ENABLED(MKS_12864OLED) \
+  + ENABLED(MKS_12864OLED_SSD1306) \
+  + ENABLED(U8GLIB_SH1106_EINSTART) \
+  + ENABLED(OVERLORD_OLED) \
   + ENABLED(DGUS_LCD) \
-  + (ENABLED(EXTENSIBLE_UI) && NONE(MALYAN_LCD, DGUS_LCD))
+  + ENABLED(MALYAN_LCD) \
+  + ENABLED(LULZBOT_TOUCH_UI) \
+  + ENABLED(FSMC_GRAPHICAL_TFT)
   #error "Please select no more than one LCD controller option."
 #endif
+
+#undef IS_RRD_SC
+#undef IS_RRD_FG_SC
+#undef IS_ULTRA_LCD
+#undef IS_U8GLIB_SSD1306
+#undef IS_RRW_KEYPAD
+#undef IS_EXTUI
+#undef IS_ULTIPANEL
 
 /**
  * FYSETC Mini 12864 RGB backlighting required
@@ -2016,18 +2033,12 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
  * TMC2208/2209 software UART and ENDSTOP_INTERRUPTS both use pin change interrupts (PCI)
  */
 #if HAS_TMC220x && !defined(TARGET_LPC1768) && ENABLED(ENDSTOP_INTERRUPTS_FEATURE) && !( \
-       defined(X_HARDWARE_SERIAL ) \
-    || defined(X2_HARDWARE_SERIAL) \
-    || defined(Y_HARDWARE_SERIAL ) \
-    || defined(Y2_HARDWARE_SERIAL) \
-    || defined(Z_HARDWARE_SERIAL ) \
-    || defined(Z2_HARDWARE_SERIAL) \
-    || defined(Z3_HARDWARE_SERIAL) \
-    || defined(E0_HARDWARE_SERIAL) \
-    || defined(E1_HARDWARE_SERIAL) \
-    || defined(E2_HARDWARE_SERIAL) \
-    || defined(E3_HARDWARE_SERIAL) \
-    || defined(E4_HARDWARE_SERIAL) \
+       defined(X_HARDWARE_SERIAL ) || defined(X2_HARDWARE_SERIAL) \
+    || defined(Y_HARDWARE_SERIAL ) || defined(Y2_HARDWARE_SERIAL) \
+    || defined(Z_HARDWARE_SERIAL ) || defined(Z2_HARDWARE_SERIAL) \
+    || defined(Z3_HARDWARE_SERIAL) || defined(E0_HARDWARE_SERIAL) \
+    || defined(E1_HARDWARE_SERIAL) || defined(E2_HARDWARE_SERIAL) \
+    || defined(E3_HARDWARE_SERIAL) || defined(E4_HARDWARE_SERIAL) \
     || defined(E5_HARDWARE_SERIAL) )
   #error "Select hardware UART for TMC2208 to use both TMC2208 and ENDSTOP_INTERRUPTS_FEATURE."
 #endif
@@ -2036,17 +2047,12 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
  * TMC2208/2209 software UART is only supported on AVR, LPC, STM32F1 and STM32F4
  */
 #if HAS_TMC220x && !defined(__AVR__) && !defined(TARGET_LPC1768) && !defined(TARGET_STM32F1) && !defined(TARGET_STM32F4) && !( \
-       defined(X_HARDWARE_SERIAL ) \
-    || defined(X2_HARDWARE_SERIAL) \
-    || defined(Y_HARDWARE_SERIAL ) \
-    || defined(Y2_HARDWARE_SERIAL) \
-    || defined(Z_HARDWARE_SERIAL ) \
-    || defined(Z2_HARDWARE_SERIAL) \
-    || defined(E0_HARDWARE_SERIAL) \
-    || defined(E1_HARDWARE_SERIAL) \
-    || defined(E2_HARDWARE_SERIAL) \
-    || defined(E3_HARDWARE_SERIAL) \
-    || defined(E4_HARDWARE_SERIAL) \
+       defined(X_HARDWARE_SERIAL ) || defined(X2_HARDWARE_SERIAL) \
+    || defined(Y_HARDWARE_SERIAL ) || defined(Y2_HARDWARE_SERIAL) \
+    || defined(Z_HARDWARE_SERIAL ) || defined(Z2_HARDWARE_SERIAL) \
+    || defined(Z3_HARDWARE_SERIAL) || defined(E0_HARDWARE_SERIAL) \
+    || defined(E1_HARDWARE_SERIAL) || defined(E2_HARDWARE_SERIAL) \
+    || defined(E3_HARDWARE_SERIAL) || defined(E4_HARDWARE_SERIAL) \
     || defined(E5_HARDWARE_SERIAL) )
   #error "TMC2208 Software Serial is supported only on AVR, LPC1768, STM32F1 and STM32F4 platforms."
 #endif
@@ -2065,18 +2071,54 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
 
   #if ENABLED(DELTA) && !BOTH(STEALTHCHOP_XY, STEALTHCHOP_Z)
     #error "SENSORLESS_HOMING on DELTA currently requires STEALTHCHOP_XY and STEALTHCHOP_Z."
-  #elif X_SENSORLESS && X_HOME_DIR == -1 && (X_MIN_ENDSTOP_INVERTING != X_ENDSTOP_INVERTING || DISABLED(ENDSTOPPULLUP_XMIN))
-    #error "SENSORLESS_HOMING requires X_MIN_ENDSTOP_INVERTING and ENDSTOPPULLUP_XMIN when homing to X_MIN."
-  #elif X_SENSORLESS && X_HOME_DIR ==  1 && (X_MAX_ENDSTOP_INVERTING != X_ENDSTOP_INVERTING || DISABLED(ENDSTOPPULLUP_XMAX))
-    #error "SENSORLESS_HOMING requires X_MAX_ENDSTOP_INVERTING and ENDSTOPPULLUP_XMAX when homing to X_MAX."
-  #elif Y_SENSORLESS && Y_HOME_DIR == -1 && (Y_MIN_ENDSTOP_INVERTING != Y_ENDSTOP_INVERTING || DISABLED(ENDSTOPPULLUP_YMIN))
-    #error "SENSORLESS_HOMING requires Y_MIN_ENDSTOP_INVERTING and ENDSTOPPULLUP_YMIN when homing to Y_MIN."
-  #elif Y_SENSORLESS && Y_HOME_DIR ==  1 && (Y_MAX_ENDSTOP_INVERTING != Y_ENDSTOP_INVERTING || DISABLED(ENDSTOPPULLUP_YMAX))
-    #error "SENSORLESS_HOMING requires Y_MAX_ENDSTOP_INVERTING and ENDSTOPPULLUP_YMAX when homing to Y_MAX."
-  #elif Z_SENSORLESS && Z_HOME_DIR == -1 && (Z_MIN_ENDSTOP_INVERTING != Z_ENDSTOP_INVERTING || DISABLED(ENDSTOPPULLUP_ZMIN))
-    #error "SENSORLESS_HOMING requires Z_MIN_ENDSTOP_INVERTING and ENDSTOPPULLUP_ZMIN when homing to Z_MIN."
-  #elif Z_SENSORLESS && Z_HOME_DIR ==  1 && (Z_MAX_ENDSTOP_INVERTING != Z_ENDSTOP_INVERTING || DISABLED(ENDSTOPPULLUP_ZMAX))
-    #error "SENSORLESS_HOMING requires Z_MAX_ENDSTOP_INVERTING and ENDSTOPPULLUP_ZMAX when homing to Z_MAX."
+  #elif X_SENSORLESS && X_HOME_DIR < 0 && DISABLED(ENDSTOPPULLUPS, ENDSTOPPULLUP_XMIN)
+    #error "SENSORLESS_HOMING requires ENDSTOPPULLUP_XMIN (or ENDSTOPPULLUPS) when homing to X_MIN."
+  #elif X_SENSORLESS && X_HOME_DIR > 0 && DISABLED(ENDSTOPPULLUPS, ENDSTOPPULLUP_XMAX)
+    #error "SENSORLESS_HOMING requires ENDSTOPPULLUP_XMAX (or ENDSTOPPULLUPS) when homing to X_MAX."
+  #elif Y_SENSORLESS && Y_HOME_DIR < 0 && DISABLED(ENDSTOPPULLUPS, ENDSTOPPULLUP_YMIN)
+    #error "SENSORLESS_HOMING requires ENDSTOPPULLUP_YMIN (or ENDSTOPPULLUPS) when homing to Y_MIN."
+  #elif Y_SENSORLESS && Y_HOME_DIR > 0 && DISABLED(ENDSTOPPULLUPS, ENDSTOPPULLUP_YMAX)
+    #error "SENSORLESS_HOMING requires ENDSTOPPULLUP_YMAX (or ENDSTOPPULLUPS) when homing to Y_MAX."
+  #elif Z_SENSORLESS && Z_HOME_DIR < 0 && DISABLED(ENDSTOPPULLUPS, ENDSTOPPULLUP_ZMIN)
+    #error "SENSORLESS_HOMING requires ENDSTOPPULLUP_ZMIN (or ENDSTOPPULLUPS) when homing to Z_MIN."
+  #elif Z_SENSORLESS && Z_HOME_DIR > 0 && DISABLED(ENDSTOPPULLUPS, ENDSTOPPULLUP_ZMAX)
+    #error "SENSORLESS_HOMING requires ENDSTOPPULLUP_ZMAX (or ENDSTOPPULLUPS) when homing to Z_MAX."
+  #elif X_SENSORLESS && X_HOME_DIR < 0 && X_MIN_ENDSTOP_INVERTING != X_ENDSTOP_INVERTING
+    #if X_ENDSTOP_INVERTING
+      #error "SENSORLESS_HOMING requires X_MIN_ENDSTOP_INVERTING = true when homing to X_MIN."
+    #else
+      #error "SENSORLESS_HOMING requires X_MIN_ENDSTOP_INVERTING = false when homing TMC2209 to X_MIN."
+    #endif
+  #elif X_SENSORLESS && X_HOME_DIR > 0 && X_MAX_ENDSTOP_INVERTING != X_ENDSTOP_INVERTING
+    #if X_ENDSTOP_INVERTING
+      #error "SENSORLESS_HOMING requires X_MAX_ENDSTOP_INVERTING = true when homing to X_MAX."
+    #else
+      #error "SENSORLESS_HOMING requires X_MAX_ENDSTOP_INVERTING = false when homing TMC2209 to X_MAX."
+    #endif
+  #elif Y_SENSORLESS && Y_HOME_DIR < 0 && Y_MIN_ENDSTOP_INVERTING != Y_ENDSTOP_INVERTING
+    #if Y_ENDSTOP_INVERTING
+      #error "SENSORLESS_HOMING requires Y_MIN_ENDSTOP_INVERTING = true when homing to Y_MIN."
+    #else
+      #error "SENSORLESS_HOMING requires Y_MIN_ENDSTOP_INVERTING = false when homing TMC2209 to Y_MIN."
+    #endif
+  #elif Y_SENSORLESS && Y_HOME_DIR > 0 && Y_MAX_ENDSTOP_INVERTING != Y_ENDSTOP_INVERTING
+    #if Y_ENDSTOP_INVERTING
+      #error "SENSORLESS_HOMING requires Y_MAX_ENDSTOP_INVERTING = true when homing to Y_MAX."
+    #else
+      #error "SENSORLESS_HOMING requires Y_MAX_ENDSTOP_INVERTING = false when homing TMC2209 to Y_MAX."
+    #endif
+  #elif Z_SENSORLESS && Z_HOME_DIR < 0 && Z_MIN_ENDSTOP_INVERTING != Z_ENDSTOP_INVERTING
+    #if Z_ENDSTOP_INVERTING
+      #error "SENSORLESS_HOMING requires Z_MIN_ENDSTOP_INVERTING = true when homing to Z_MIN."
+    #else
+      #error "SENSORLESS_HOMING requires Z_MIN_ENDSTOP_INVERTING = false when homing TMC2209 to Z_MIN."
+    #endif
+  #elif Z_SENSORLESS && Z_HOME_DIR > 0 && Z_MAX_ENDSTOP_INVERTING != Z_ENDSTOP_INVERTING
+    #if Z_ENDSTOP_INVERTING
+      #error "SENSORLESS_HOMING requires Z_MAX_ENDSTOP_INVERTING = true when homing to Z_MAX."
+    #else
+      #error "SENSORLESS_HOMING requires Z_MAX_ENDSTOP_INVERTING = false when homing TMC2209 to Z_MAX."
+    #endif
   #elif ENDSTOP_NOISE_THRESHOLD
     #error "SENSORLESS_HOMING is incompatible with ENDSTOP_NOISE_THRESHOLD."
   #elif !(X_SENSORLESS || Y_SENSORLESS || Z_SENSORLESS)
@@ -2116,6 +2158,70 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
 #elif STEALTHCHOP_ENABLED && !HAS_STEALTHCHOP
   #error "STEALTHCHOP requires TMC2130, TMC2160, TMC2208, TMC2209, or TMC5160 stepper drivers."
 #endif
+
+#if TMC_USE_CHAIN
+  #if  (X_CHAIN_POS  && !PIN_EXISTS(X_CS) ) \
+    || (Y_CHAIN_POS  && !PIN_EXISTS(Y_CS) ) \
+    || (Z_CHAIN_POS  && !PIN_EXISTS(Z_CS) ) \
+    || (X2_CHAIN_POS && !PIN_EXISTS(X2_CS)) \
+    || (Y2_CHAIN_POS && !PIN_EXISTS(Y2_CS)) \
+    || (Z2_CHAIN_POS && !PIN_EXISTS(Z2_CS)) \
+    || (Z3_CHAIN_POS && !PIN_EXISTS(Z3_CS)) \
+    || (E0_CHAIN_POS && !PIN_EXISTS(E0_CS)) \
+    || (E1_CHAIN_POS && !PIN_EXISTS(E1_CS)) \
+    || (E2_CHAIN_POS && !PIN_EXISTS(E2_CS)) \
+    || (E3_CHAIN_POS && !PIN_EXISTS(E3_CS)) \
+    || (E4_CHAIN_POS && !PIN_EXISTS(E4_CS)) \
+    || (E5_CHAIN_POS && !PIN_EXISTS(E5_CS))
+    #error "With TMC_USE_CHAIN all chained TMC drivers need a CS pin."
+  #else
+    #if X_CHAIN_POS
+      #define CS_COMPARE X_CS_PIN
+    #elif Y_CHAIN_POS
+      #define CS_COMPARE Y_CS_PIN
+    #elif Z_CHAIN_POS
+      #define CS_COMPARE Z_CS_PIN
+    #elif X2_CHAIN_POS
+      #define CS_COMPARE X2_CS_PIN
+    #elif Y2_CHAIN_POS
+      #define CS_COMPARE Y2_CS_PIN
+    #elif Z2_CHAIN_POS
+      #define CS_COMPARE Z2_CS_PIN
+    #elif Z3_CHAIN_POS
+      #define CS_COMPARE Z3_CS_PIN
+    #elif E0_CHAIN_POS
+      #define CS_COMPARE E0_CS_PIN
+    #elif E1_CHAIN_POS
+      #define CS_COMPARE E1_CS_PIN
+    #elif E2_CHAIN_POS
+      #define CS_COMPARE E2_CS_PIN
+    #elif E3_CHAIN_POS
+      #define CS_COMPARE E3_CS_PIN
+    #elif E4_CHAIN_POS
+      #define CS_COMPARE E4_CS_PIN
+    #elif E5_CHAIN_POS
+      #define CS_COMPARE E5_CS_PIN
+    #else
+      #error "With TMC_USE_CHAIN some TMC drivers should be chained."
+    #endif
+    #if  (X_CHAIN_POS  && X_CS_PIN  != CS_COMPARE) \
+      || (Y_CHAIN_POS  && Y_CS_PIN  != CS_COMPARE) \
+      || (Z_CHAIN_POS  && Z_CS_PIN  != CS_COMPARE) \
+      || (X2_CHAIN_POS && X2_CS_PIN != CS_COMPARE) \
+      || (Y2_CHAIN_POS && Y2_CS_PIN != CS_COMPARE) \
+      || (Z2_CHAIN_POS && Z2_CS_PIN != CS_COMPARE) \
+      || (Z3_CHAIN_POS && Z3_CS_PIN != CS_COMPARE) \
+      || (E0_CHAIN_POS && E0_CS_PIN != CS_COMPARE) \
+      || (E1_CHAIN_POS && E1_CS_PIN != CS_COMPARE) \
+      || (E2_CHAIN_POS && E2_CS_PIN != CS_COMPARE) \
+      || (E3_CHAIN_POS && E3_CS_PIN != CS_COMPARE) \
+      || (E4_CHAIN_POS && E4_CS_PIN != CS_COMPARE) \
+      || (E5_CHAIN_POS && E5_CS_PIN != CS_COMPARE)
+      #error "With TMC_USE_CHAIN all TMC drivers must use the same CS pin."
+    #endif
+  #endif
+  #undef CS_COMPARE
+#endif // TMC_USE_CHAIN
 
 #if ENABLED(DELTA) && (ENABLED(STEALTHCHOP_XY) != ENABLED(STEALTHCHOP_Z))
   #error "STEALTHCHOP_XY and STEALTHCHOP_Z must be the same on DELTA."
@@ -2206,7 +2312,7 @@ static_assert(   _ARR_TEST(3,0) && _ARR_TEST(3,1) && _ARR_TEST(3,2)
   constexpr float sanity_arr_z_align_x[] = Z_STEPPER_ALIGN_X, sanity_arr_z_align_y[] = Z_STEPPER_ALIGN_Y;
   static_assert(
     COUNT(sanity_arr_z_align_x) == Z_STEPPER_COUNT && COUNT(sanity_arr_z_align_y) == Z_STEPPER_COUNT,
-    "Z_STEPPER_ALIGN_[XY]POS settings require one element per Z stepper."
+    "Z_STEPPER_ALIGN_[XY] settings require one element per Z stepper."
   );
 #endif
 
@@ -2249,8 +2355,16 @@ static_assert(   _ARR_TEST(3,0) && _ARR_TEST(3,1) && _ARR_TEST(3,2)
   #endif
 #endif
 
-#if ENABLED(BACKLASH_COMPENSATION) && IS_CORE
-  #error "BACKLASH_COMPENSATION is incompatible with CORE kinematics."
+#if ENABLED(BACKLASH_COMPENSATION)
+  #if IS_CORE
+    #error "BACKLASH_COMPENSATION is incompatible with CORE kinematics."
+  #endif
+  #ifndef BACKLASH_DISTANCE_MM
+    #error "BACKLASH_COMPENSATION requires BACKLASH_DISTANCE_MM"
+  #endif
+  #ifndef BACKLASH_CORRECTION
+    #error "BACKLASH_COMPENSATION requires BACKLASH_CORRECTION"
+  #endif
 #endif
 
 #if ENABLED(GRADIENT_MIX) && MIXING_VIRTUAL_TOOLS < 2

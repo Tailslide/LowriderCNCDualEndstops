@@ -45,7 +45,7 @@
 
 #include "HAL/shared/Delay.h"
 
-#include "module/stepper_indirection.h"
+#include "module/stepper/indirection.h"
 
 #ifdef ARDUINO
   #include <pins_arduino.h>
@@ -57,11 +57,15 @@
 #include "gcode/parser.h"
 #include "gcode/queue.h"
 
+#if ENABLED(TOUCH_BUTTONS)
+  #include "feature/touch/xpt2046.h"
+#endif
+
 #if ENABLED(HOST_ACTION_COMMANDS)
   #include "feature/host_actions.h"
 #endif
 
-#if HAS_BUZZER && DISABLED(LCD_USE_I2C_BUZZER)
+#if USE_BEEPER
   #include "libs/buzzer.h"
 #endif
 
@@ -83,6 +87,10 @@
 
 #if ENABLED(BLTOUCH)
   #include "feature/bltouch.h"
+#endif
+
+#if ENABLED(POLL_JOG)
+  #include "feature/joystick.h"
 #endif
 
 #if HAS_SERVOS
@@ -278,6 +286,15 @@ void enable_all_steppers() {
   enable_X();
   enable_Y();
   enable_Z();
+  enable_E0();
+  enable_E1();
+  enable_E2();
+  enable_E3();
+  enable_E4();
+  enable_E5();
+}
+
+void enable_e_steppers() {
   enable_E0();
   enable_E1();
   enable_E2();
@@ -535,28 +552,28 @@ void manage_inactivity(const bool ignore_stepper_queue/*=false*/) {
       #if ENABLED(SWITCHING_EXTRUDER)
         bool oldstatus;
         switch (active_extruder) {
-          default: oldstatus = E0_ENABLE_READ; enable_E0(); break;
+          default: oldstatus = E0_ENABLE_READ(); enable_E0(); break;
           #if E_STEPPERS > 1
-            case 2: case 3: oldstatus = E1_ENABLE_READ; enable_E1(); break;
+            case 2: case 3: oldstatus = E1_ENABLE_READ(); enable_E1(); break;
             #if E_STEPPERS > 2
-              case 4: case 5: oldstatus = E2_ENABLE_READ; enable_E2(); break;
+              case 4: case 5: oldstatus = E2_ENABLE_READ(); enable_E2(); break;
             #endif // E_STEPPERS > 2
           #endif // E_STEPPERS > 1
         }
       #else // !SWITCHING_EXTRUDER
         bool oldstatus;
         switch (active_extruder) {
-          default: oldstatus = E0_ENABLE_READ; enable_E0(); break;
+          default: oldstatus = E0_ENABLE_READ(); enable_E0(); break;
           #if E_STEPPERS > 1
-            case 1: oldstatus = E1_ENABLE_READ; enable_E1(); break;
+            case 1: oldstatus = E1_ENABLE_READ(); enable_E1(); break;
             #if E_STEPPERS > 2
-              case 2: oldstatus = E2_ENABLE_READ; enable_E2(); break;
+              case 2: oldstatus = E2_ENABLE_READ(); enable_E2(); break;
               #if E_STEPPERS > 3
-                case 3: oldstatus = E3_ENABLE_READ; enable_E3(); break;
+                case 3: oldstatus = E3_ENABLE_READ(); enable_E3(); break;
                 #if E_STEPPERS > 4
-                  case 4: oldstatus = E4_ENABLE_READ; enable_E4(); break;
+                  case 4: oldstatus = E4_ENABLE_READ(); enable_E4(); break;
                   #if E_STEPPERS > 5
-                    case 5: oldstatus = E5_ENABLE_READ; enable_E5(); break;
+                    case 5: oldstatus = E5_ENABLE_READ(); enable_E5(); break;
                   #endif // E_STEPPERS > 5
                 #endif // E_STEPPERS > 4
               #endif // E_STEPPERS > 3
@@ -655,6 +672,21 @@ void idle(
     bool no_stepper_sleep/*=false*/
   #endif
 ) {
+  #if ENABLED(POWER_LOSS_RECOVERY) && PIN_EXISTS(POWER_LOSS)
+    recovery.outage();
+  #endif
+
+  #if ENABLED(SPI_ENDSTOPS)
+    if (endstops.tmc_spi_homing.any
+      #if ENABLED(IMPROVE_HOMING_RELIABILITY)
+        && ELAPSED(millis(), sg_guard_period)
+      #endif
+    ) {
+      for (uint8_t i = 4; i--;) // Read SGT 4 times per idle loop
+        if (endstops.tmc_spi_homing_check()) break;
+    }
+  #endif
+
   #if ENABLED(MAX7219_DEBUG)
     max7219.idle_tasks();
   #endif
@@ -677,15 +709,18 @@ void idle(
     print_job_timer.tick();
   #endif
 
-  #if HAS_BUZZER && DISABLED(LCD_USE_I2C_BUZZER)
+  #if USE_BEEPER
     buzzer.tick();
   #endif
 
   #if ENABLED(I2C_POSITION_ENCODERS)
     static millis_t i2cpem_next_update_ms;
-    if (planner.has_blocks_queued() && ELAPSED(millis(), i2cpem_next_update_ms)) {
-      I2CPEM.update();
-      i2cpem_next_update_ms = millis() + I2CPE_MIN_UPD_TIME_MS;
+    if (planner.has_blocks_queued()) {
+      const millis_t ms = millis();
+      if (ELAPSED(ms, i2cpem_next_update_ms)) {
+        I2CPEM.update();
+        i2cpem_next_update_ms = ms + I2CPE_MIN_UPD_TIME_MS;
+      }
     }
   #endif
 
@@ -711,13 +746,17 @@ void idle(
   #if ENABLED(PRUSA_MMU2)
     mmu2.mmu_loop();
   #endif
+
+  #if ENABLED(POLL_JOG)
+    joystick.inject_jog_moves();
+  #endif
 }
 
 /**
  * Kill all activity and lock the machine.
  * After this the machine will need to be reset.
  */
-void kill(PGM_P const lcd_msg/*=nullptr*/) {
+void kill(PGM_P const lcd_msg/*=nullptr*/, const bool steppers_off/*=false*/) {
   thermalManager.disable_all_heaters();
 
   SERIAL_ERROR_MSG(MSG_ERR_KILLED);
@@ -732,10 +771,10 @@ void kill(PGM_P const lcd_msg/*=nullptr*/) {
     host_action_kill();
   #endif
 
-  minkill();
+  minkill(steppers_off);
 }
 
-void minkill() {
+void minkill(const bool steppers_off/*=false*/) {
 
   // Wait a short time (allows messages to get out before shutting down.
   for (int i = 1000; i--;) DELAY_US(600);
@@ -745,7 +784,11 @@ void minkill() {
   // Wait to ensure all interrupts stopped
   for (int i = 1000; i--;) DELAY_US(250);
 
-  thermalManager.disable_all_heaters(); // turn off heaters again
+  // Reiterate heaters off
+  thermalManager.disable_all_heaters();
+
+  // Power off all steppers (for M112) or just the E steppers
+  steppers_off ? disable_all_steppers() : disable_e_steppers();
 
   #if HAS_POWER_SWITCH
     PSU_OFF();
@@ -771,8 +814,8 @@ void minkill() {
       #endif
     }
 
-    void(*resetFunc)(void) = 0; // Declare resetFunc() at address 0
-    resetFunc();                // Jump to address 0
+    void (*resetFunc)() = 0;  // Declare resetFunc() at address 0
+    resetFunc();                  // Jump to address 0
 
   #else // !HAS_KILL
 
@@ -858,6 +901,10 @@ void setup() {
     runout.setup();
   #endif
 
+  #if ENABLED(POWER_LOSS_RECOVERY)
+    recovery.setup();
+  #endif
+
   setup_killpin();
 
   #if HAS_TMC220x
@@ -934,14 +981,17 @@ void setup() {
     ui.show_bootscreen();
   #endif
 
-  #if ENABLED(SDIO_SUPPORT) && !PIN_EXISTS(SD_DETECT)
-    // Auto-mount the SD for EEPROM.dat emulation
-    if (!card.isDetected()) card.initsd();
+  #if ENABLED(SDSUPPORT)
+    card.mount(); // Mount the SD card before settings.first_load
   #endif
 
   // Load data from EEPROM if available (or use defaults)
   // This also updates variables in the planner, elsewhere
   settings.first_load();
+
+  #if ENABLED(TOUCH_BUTTONS)
+    touch.init();
+  #endif
 
   #if HAS_M206_COMMAND
     // Initialize current position based on home_offset
@@ -1094,6 +1144,10 @@ void setup() {
     init_closedloop();
   #endif
 
+  #ifdef STARTUP_COMMANDS
+    queue.inject_P(PSTR(STARTUP_COMMANDS));
+  #endif
+
   #if ENABLED(INIT_SDCARD_ON_BOOT) && !HAS_SPI_LCD
     card.beginautostart();
   #endif
@@ -1118,6 +1172,8 @@ void setup() {
 void loop() {
 
   for (;;) {
+
+    idle(); // Do an idle first so boot is slightly faster
 
     #if ENABLED(SDSUPPORT)
 
@@ -1147,9 +1203,7 @@ void loop() {
 
     #endif // SDSUPPORT
 
-    if (queue.length < BUFSIZE) queue.get_available_commands();
     queue.advance();
     endstops.event_handler();
-    idle();
   }
 }

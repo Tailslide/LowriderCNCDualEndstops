@@ -51,7 +51,7 @@
   #include "../feature/bltouch.h"
 #endif
 
-#if EITHER(ULTRA_LCD, EXTENSIBLE_UI)
+#if HAS_DISPLAY
   #include "../lcd/ultralcd.h"
 #endif
 
@@ -105,7 +105,7 @@ float current_position[XYZE] = { X_HOME_POS, Y_HOME_POS, Z_HOME_POS };
  * Cartesian Destination
  *   The destination for a move, filled in by G-code movement commands,
  *   and expected by functions like 'prepare_move_to_destination'.
- *   Set with 'get_destination_from_command' or 'set_destination_from_current'.
+ *   G-codes can set destination using 'get_destination_from_command'
  */
 float destination[XYZE]; // = { 0 }
 
@@ -423,6 +423,9 @@ void do_blocking_move_to(const float rx, const float ry, const float rz, const f
 void do_blocking_move_to_x(const float &rx, const float &fr_mm_s/*=0.0*/) {
   do_blocking_move_to(rx, current_position[Y_AXIS], current_position[Z_AXIS], fr_mm_s);
 }
+void do_blocking_move_to_y(const float &ry, const float &fr_mm_s/*=0.0*/) {
+  do_blocking_move_to(current_position[X_AXIS], ry, current_position[Z_AXIS], fr_mm_s);
+}
 void do_blocking_move_to_z(const float &rz, const float &fr_mm_s/*=0.0*/) {
   do_blocking_move_to(current_position[X_AXIS], current_position[Y_AXIS], rz, fr_mm_s);
 }
@@ -436,12 +439,15 @@ void do_blocking_move_to_xy(const float &rx, const float &ry, const float &fr_mm
 //
 static float saved_feedrate_mm_s;
 static int16_t saved_feedrate_percentage;
-void setup_for_endstop_or_probe_move() {
+void remember_feedrate_and_scaling() {
   saved_feedrate_mm_s = feedrate_mm_s;
   saved_feedrate_percentage = feedrate_percentage;
+}
+void remember_feedrate_scaling_off() {
+  remember_feedrate_and_scaling();
   feedrate_percentage = 100;
 }
-void clean_up_after_endstop_or_probe_move() {
+void restore_feedrate_and_scaling() {
   feedrate_mm_s = saved_feedrate_mm_s;
   feedrate_percentage = saved_feedrate_percentage;
 }
@@ -499,7 +505,7 @@ void clean_up_after_endstop_or_probe_move() {
       soft_endstop[axis].min = base_min_pos(axis);
       soft_endstop[axis].max = (axis == Z_AXIS ? delta_height
       #if HAS_BED_PROBE
-        - zprobe_zoffset
+        - probe_offset[Z_AXIS]
       #endif
       : base_max_pos(axis));
 
@@ -538,10 +544,8 @@ void clean_up_after_endstop_or_probe_move() {
 
     #endif
 
-  #if ENABLED(DEBUG_LEVELING_FEATURE)
-    if (DEBUGGING(LEVELING))
-      SERIAL_ECHOLNPAIR("Axis ", axis_codes[axis], " min:", soft_endstop[axis].min, " max:", soft_endstop[axis].max);
-  #endif
+  if (DEBUGGING(LEVELING))
+    SERIAL_ECHOLNPAIR("Axis ", axis_codes[axis], " min:", soft_endstop[axis].min, " max:", soft_endstop[axis].max);
 }
 
   /**
@@ -669,7 +673,7 @@ void clean_up_after_endstop_or_probe_move() {
 
     // For SCARA enforce a minimum segment size
     #if IS_SCARA
-      NOMORE(segments, cartesian_mm * (1.0f / float(SCARA_MIN_SEGMENT_LENGTH)));
+      NOMORE(segments, cartesian_mm * RECIPROCAL(SCARA_MIN_SEGMENT_LENGTH));
     #endif
 
     // At least one segment is required
@@ -1044,7 +1048,7 @@ bool axis_unhomed_error(const bool x/*=true*/, const bool y/*=true*/, const bool
     if (zz) SERIAL_CHAR('Z');
     SERIAL_ECHOLNPGM(" " MSG_FIRST);
 
-    #if EITHER(ULTRA_LCD, EXTENSIBLE_UI)
+    #if HAS_DISPLAY
       ui.status_printf_P(0, PSTR(MSG_HOME " %s%s%s " MSG_FIRST), xx ? MSG_X : "", yy ? MSG_Y : "", zz ? MSG_Z : "");
     #endif
     return true;
@@ -1073,7 +1077,7 @@ float get_homing_bump_feedrate(const AxisEnum axis) {
    * Set sensorless homing if the axis has it, accounting for Core Kinematics.
    */
   sensorless_t start_sensorless_homing_per_axis(const AxisEnum axis) {
-    sensorless_t stealth_states { false, false, false, false, false, false, false };
+    sensorless_t stealth_states { false };
 
     switch (axis) {
       default: break;
@@ -1120,6 +1124,26 @@ float get_homing_bump_feedrate(const AxisEnum axis) {
           break;
       #endif
     }
+
+    #if ENABLED(SPI_ENDSTOPS)
+      switch (axis) {
+        #if X_SPI_SENSORLESS
+          case X_AXIS: endstops.tmc_spi_homing.x = true; break;
+        #endif
+        #if Y_SPI_SENSORLESS
+          case Y_AXIS: endstops.tmc_spi_homing.y = true; break;
+        #endif
+        #if Z_SPI_SENSORLESS
+          case Z_AXIS: endstops.tmc_spi_homing.z = true; break;
+        #endif
+        default: break;
+      }
+    #endif
+
+    #if ENABLED(IMPROVE_HOMING_RELIABILITY)
+      sg_guard_period = millis() + default_sg_guard_duration;
+    #endif
+
     return stealth_states;
   }
 
@@ -1169,6 +1193,21 @@ float get_homing_bump_feedrate(const AxisEnum axis) {
           break;
       #endif
     }
+
+    #if ENABLED(SPI_ENDSTOPS)
+      switch (axis) {
+        #if X_SPI_SENSORLESS
+          case X_AXIS: endstops.tmc_spi_homing.x = false; break;
+        #endif
+        #if Y_SPI_SENSORLESS
+          case Y_AXIS: endstops.tmc_spi_homing.y = false; break;
+        #endif
+        #if Z_SPI_SENSORLESS
+          case Z_AXIS: endstops.tmc_spi_homing.z = false; break;
+        #endif
+        default: break;
+      }
+    #endif
   }
 
 #endif // SENSORLESS_HOMING
@@ -1289,11 +1328,6 @@ void set_axis_is_at_home(const AxisEnum axis) {
   SBI(axis_known_position, axis);
   SBI(axis_homed, axis);
 
-  #if HAS_POSITION_SHIFT
-    position_shift[axis] = 0;
-    update_workspace_offset(axis);
-  #endif
-
   #if ENABLED(DUAL_X_CARRIAGE)
     if (axis == X_AXIS && (active_extruder == 1 || dual_x_carriage_mode == DXC_DUPLICATION_MODE)) {
       current_position[X_AXIS] = x_home_pos(active_extruder);
@@ -1306,7 +1340,7 @@ void set_axis_is_at_home(const AxisEnum axis) {
   #elif ENABLED(DELTA)
     current_position[axis] = (axis == Z_AXIS ? delta_height
     #if HAS_BED_PROBE
-      - zprobe_zoffset
+      - probe_offset[Z_AXIS]
     #endif
     : base_home_pos(axis));
   #else
@@ -1320,9 +1354,9 @@ void set_axis_is_at_home(const AxisEnum axis) {
     if (axis == Z_AXIS) {
       #if HOMING_Z_WITH_PROBE
 
-        current_position[Z_AXIS] -= zprobe_zoffset;
+        current_position[Z_AXIS] -= probe_offset[Z_AXIS];
 
-        if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPAIR("*** Z HOMED WITH PROBE (Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN) ***\n> zprobe_zoffset = ", zprobe_zoffset);
+        if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPAIR("*** Z HOMED WITH PROBE (Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN) ***\n> probe_offset[Z_AXIS] = ", probe_offset[Z_AXIS]);
 
       #else
 
@@ -1382,9 +1416,24 @@ void homeaxis(const AxisEnum axis) {
     // Only Z homing (with probe) is permitted
     if (axis != Z_AXIS) { BUZZ(100, 880); return; }
   #else
-    #define CAN_HOME(A) \
+    #define _CAN_HOME(A) \
       (axis == _AXIS(A) && ((A##_MIN_PIN > -1 && A##_HOME_DIR < 0) || (A##_MAX_PIN > -1 && A##_HOME_DIR > 0)))
-    if (!CAN_HOME(X) && !CAN_HOME(Y) && !CAN_HOME(Z)) return;
+    #if X_SPI_SENSORLESS
+      #define CAN_HOME_X true
+    #else
+      #define CAN_HOME_X _CAN_HOME(X)
+    #endif
+    #if Y_SPI_SENSORLESS
+      #define CAN_HOME_Y true
+    #else
+      #define CAN_HOME_Y _CAN_HOME(Y)
+    #endif
+    #if Z_SPI_SENSORLESS
+      #define CAN_HOME_Z true
+    #else
+      #define CAN_HOME_Z _CAN_HOME(Z)
+    #endif
+    if (!CAN_HOME_X && !CAN_HOME_Y && !CAN_HOME_Z) return;
   #endif
 
   if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPAIR(">>> homeaxis(", axis_codes[axis], ")");
@@ -1599,6 +1648,26 @@ void homeaxis(const AxisEnum axis) {
   // Put away the Z probe
   #if HOMING_Z_WITH_PROBE
     if (axis == Z_AXIS && STOW_PROBE()) return;
+  #endif
+
+  #ifdef HOMING_BACKOFF_MM
+    constexpr float endstop_backoff[XYZ] = HOMING_BACKOFF_MM;
+    const float backoff_mm = endstop_backoff[
+      #if ENABLED(DELTA)
+        Z_AXIS
+      #else
+        axis
+      #endif
+    ];
+    if (backoff_mm) {
+      current_position[axis] -= ABS(backoff_mm) * axis_home_dir;
+      line_to_current_position(
+        #if HOMING_Z_WITH_PROBE
+          (axis == Z_AXIS) ? MMM_TO_MMS(Z_PROBE_SPEED_FAST) :
+        #endif
+        homing_feedrate(axis)
+      );
+    }
   #endif
 
   // Clear retracted status if homing the Z axis

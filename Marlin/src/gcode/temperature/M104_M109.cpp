@@ -20,6 +20,10 @@
  *
  */
 
+#include "../../inc/MarlinConfigPre.h"
+
+#if EXTRUDERS
+
 #include "../gcode.h"
 #include "../../module/temperature.h"
 #include "../../module/motion.h"
@@ -125,7 +129,7 @@ void GcodeSuite::M109() {
         print_job_timer.start();
     #endif
 
-    #if EITHER(ULTRA_LCD, EXTENSIBLE_UI)
+    #if HAS_DISPLAY
       if (thermalManager.isHeatingHotend(target_extruder) || !no_wait_for_cooling)
         thermalManager.set_heating_message(target_extruder);
     #endif
@@ -138,3 +142,5 @@ void GcodeSuite::M109() {
   if (set_temp)
     (void)thermalManager.wait_for_hotend(target_extruder, no_wait_for_cooling);
 }
+
+#endif // EXTRUDERS

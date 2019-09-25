@@ -21,12 +21,7 @@
  */
 #pragma once
 
-//#include <stdint.h>
-
-//#include "../inc/MarlinConfigPre.h"
-#include "../HAL/HAL.h"
-
-// #include "../core/macros.h"
+#include "../inc/MarlinConfig.h"
 
 /**
  * Define debug bit-masks
@@ -60,10 +55,12 @@ extern uint8_t marlin_debug_flags;
     if (!serial_port_index || serial_port_index == SERIAL_BOTH) (void)MYSERIAL0.WHAT(V); \
     if ( serial_port_index) (void)MYSERIAL1.WHAT(V); \
   }while(0)
+  #define SERIAL_ASSERT(P)      if(serial_port_index!=(P)){ debugger(); }
 #else
   #define _PORT_REDIRECT(n,p)   NOOP
   #define _PORT_RESTORE(n)      NOOP
   #define SERIAL_OUT(WHAT, V...) (void)MYSERIAL0.WHAT(V)
+  #define SERIAL_ASSERT(P)      NOOP
 #endif
 
 #define PORT_REDIRECT(p)        _PORT_REDIRECT(1,p)
@@ -71,14 +68,16 @@ extern uint8_t marlin_debug_flags;
 
 #define SERIAL_CHAR(x)          SERIAL_OUT(write, x)
 #define SERIAL_ECHO(x)          SERIAL_OUT(print, x)
-#define SERIAL_ECHO_F(V...)      SERIAL_OUT(print, V)
+#define SERIAL_ECHO_F(V...)     SERIAL_OUT(print, V)
 #define SERIAL_ECHOLN(x)        SERIAL_OUT(println, x)
 #define SERIAL_PRINT(x,b)       SERIAL_OUT(print, x, b)
 #define SERIAL_PRINTLN(x,b)     SERIAL_OUT(println, x, b)
-#define SERIAL_PRINTF(V...)      SERIAL_OUT(printf, V)
+#define SERIAL_PRINTF(V...)     SERIAL_OUT(printf, V)
 #define SERIAL_FLUSH()          SERIAL_OUT(flush)
 
-#if TX_BUFFER_SIZE > 0
+#ifdef __STM32F1__
+  #define SERIAL_FLUSHTX()      SERIAL_OUT(flush)
+#elif TX_BUFFER_SIZE > 0
   #define SERIAL_FLUSHTX()      SERIAL_OUT(flushTX)
 #else
   #define SERIAL_FLUSHTX()
@@ -147,8 +146,8 @@ extern uint8_t marlin_debug_flags;
 #define SERIAL_ECHOPGM(S)           (serialprintPGM(PSTR(S)))
 #define SERIAL_ECHOLNPGM(S)         (serialprintPGM(PSTR(S "\n")))
 
-#define SERIAL_ECHOPAIR_F(pre, V...) do{ SERIAL_ECHO(pre); SERIAL_ECHO_F(V); }while(0)
-#define SERIAL_ECHOLNPAIR_F(V...)    do{ SERIAL_ECHOPAIR_F(V); SERIAL_EOL(); }while(0)
+#define SERIAL_ECHOPAIR_F(S, V...)  do{ SERIAL_ECHOPGM(S); SERIAL_ECHO_F(V); }while(0)
+#define SERIAL_ECHOLNPAIR_F(V...)   do{ SERIAL_ECHOPAIR_F(V); SERIAL_EOL(); }while(0)
 
 #define SERIAL_ECHO_START()         serial_echo_start()
 #define SERIAL_ERROR_START()        serial_error_start()
@@ -158,6 +157,8 @@ extern uint8_t marlin_debug_flags;
 #define SERIAL_ERROR_MSG(S)         do{ SERIAL_ERROR_START(); SERIAL_ECHOLNPGM(S); }while(0)
 
 #define SERIAL_ECHO_SP(C)           serial_spaces(C)
+
+#define SERIAL_ECHO_TERNARY(TF, PRE, ON, OFF, POST) serial_ternary(TF, PSTR(PRE), PSTR(ON), PSTR(OFF), PSTR(POST))
 
 //
 // Functions for serial printing from PROGMEM. (Saves loads of SRAM.)
@@ -185,7 +186,7 @@ void serial_spaces(uint8_t count);
 
 void print_bin(const uint16_t val);
 
-void print_xyz(PGM_P const prefix, PGM_P const suffix, const float x, const float y, const float z);
 void print_xyz(PGM_P const prefix, PGM_P const suffix, const float xyz[]);
-#define SERIAL_POS(SUFFIX,VAR) do { print_xyz(PSTR("  " STRINGIFY(VAR) "="), PSTR(" : " SUFFIX "\n"), VAR); } while(0)
-#define SERIAL_XYZ(PREFIX,V...) do { print_xyz(PSTR(PREFIX), nullptr, V); } while(0)
+void print_xyz(PGM_P const prefix, PGM_P const suffix, const float &x, const float &y, const float &z);
+#define SERIAL_POS(SUFFIX,VAR) do { print_xyz(PSTR("  " STRINGIFY(VAR) "="), PSTR(" : " SUFFIX "\n"), VAR); }while(0)
+#define SERIAL_XYZ(PREFIX,V...) do { print_xyz(PSTR(PREFIX), nullptr, V); }while(0)
