@@ -505,7 +505,7 @@ void restore_feedrate_and_scaling() {
       soft_endstop[axis].min = base_min_pos(axis);
       soft_endstop[axis].max = (axis == Z_AXIS ? delta_height
       #if HAS_BED_PROBE
-        - zprobe_zoffset
+        - probe_offset[Z_AXIS]
       #endif
       : base_max_pos(axis));
 
@@ -1030,26 +1030,32 @@ void prepare_move_to_destination() {
   set_current_from_destination();
 }
 
-bool axis_unhomed_error(const bool x/*=true*/, const bool y/*=true*/, const bool z/*=true*/) {
+uint8_t axes_need_homing(uint8_t axis_bits/*=0x07*/) {
   #if ENABLED(HOME_AFTER_DEACTIVATE)
-    const bool xx = x && !TEST(axis_known_position, X_AXIS),
-               yy = y && !TEST(axis_known_position, Y_AXIS),
-               zz = z && !TEST(axis_known_position, Z_AXIS);
+    #define HOMED_FLAGS axis_known_position
   #else
-    const bool xx = x && !TEST(axis_homed, X_AXIS),
-               yy = y && !TEST(axis_homed, Y_AXIS),
-               zz = z && !TEST(axis_homed, Z_AXIS);
+    #define HOMED_FLAGS axis_homed
   #endif
-  if (xx || yy || zz) {
-    SERIAL_ECHO_START();
-    SERIAL_ECHOPGM(MSG_HOME " ");
-    if (xx) SERIAL_CHAR('X');
-    if (yy) SERIAL_CHAR('Y');
-    if (zz) SERIAL_CHAR('Z');
-    SERIAL_ECHOLNPGM(" " MSG_FIRST);
+  // Clear test bits that are homed
+  if (TEST(axis_bits, X_AXIS) && TEST(HOMED_FLAGS, X_AXIS)) CBI(axis_bits, X_AXIS);
+  if (TEST(axis_bits, Y_AXIS) && TEST(HOMED_FLAGS, Y_AXIS)) CBI(axis_bits, Y_AXIS);
+  if (TEST(axis_bits, Z_AXIS) && TEST(HOMED_FLAGS, Z_AXIS)) CBI(axis_bits, Z_AXIS);
+  return axis_bits;
+}
 
+bool axis_unhomed_error(uint8_t axis_bits/*=0x07*/) {
+  if ((axis_bits = axes_need_homing(axis_bits))) {
+    static const char home_first[] PROGMEM = MSG_HOME_FIRST;
+    char msg[sizeof(home_first)];
+    sprintf_P(msg, home_first,
+      TEST(axis_bits, X_AXIS) ? "X" : "",
+      TEST(axis_bits, Y_AXIS) ? "Y" : "",
+      TEST(axis_bits, Z_AXIS) ? "Z" : ""
+    );
+    SERIAL_ECHO_START();
+    SERIAL_ECHOLN(msg);
     #if HAS_DISPLAY
-      ui.status_printf_P(0, PSTR(MSG_HOME " %s%s%s " MSG_FIRST), xx ? MSG_X : "", yy ? MSG_Y : "", zz ? MSG_Z : "");
+      ui.set_status(msg);
     #endif
     return true;
   }
@@ -1340,7 +1346,7 @@ void set_axis_is_at_home(const AxisEnum axis) {
   #elif ENABLED(DELTA)
     current_position[axis] = (axis == Z_AXIS ? delta_height
     #if HAS_BED_PROBE
-      - zprobe_zoffset
+      - probe_offset[Z_AXIS]
     #endif
     : base_home_pos(axis));
   #else
@@ -1354,9 +1360,9 @@ void set_axis_is_at_home(const AxisEnum axis) {
     if (axis == Z_AXIS) {
       #if HOMING_Z_WITH_PROBE
 
-        current_position[Z_AXIS] -= zprobe_zoffset;
+        current_position[Z_AXIS] -= probe_offset[Z_AXIS];
 
-        if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPAIR("*** Z HOMED WITH PROBE (Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN) ***\n> zprobe_zoffset = ", zprobe_zoffset);
+        if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPAIR("*** Z HOMED WITH PROBE (Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN) ***\n> probe_offset[Z_AXIS] = ", probe_offset[Z_AXIS]);
 
       #else
 

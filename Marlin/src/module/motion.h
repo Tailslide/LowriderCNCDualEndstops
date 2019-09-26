@@ -30,12 +30,12 @@
 
 #include "../inc/MarlinConfig.h"
 
-#if IS_SCARA
-  #include "scara.h"
-#endif
-
 #if HAS_BED_PROBE
   #include "probe.h"
+#endif
+
+#if IS_SCARA
+  #include "scara.h"
 #endif
 
 // Axis homed and known-position states
@@ -211,7 +211,8 @@ void restore_feedrate_and_scaling();
 // Homing
 //
 
-bool axis_unhomed_error(const bool x=true, const bool y=true, const bool z=true);
+uint8_t axes_need_homing(uint8_t axis_bits=0x07);
+bool axis_unhomed_error(uint8_t axis_bits=0x07);
 
 #if ENABLED(NO_MOTION_BEFORE_HOMING)
   #define MOTION_CONDITIONS (IsRunning() && !axis_unhomed_error())
@@ -261,11 +262,6 @@ void homeaxis(const AxisEnum axis);
  */
 
 #if IS_KINEMATIC // (DELTA or SCARA)
-
-  #if IS_SCARA
-    extern const float L1, L2;
-  #endif
-
   #if HAS_SCARA_OFFSET
     extern float scara_home_offset[ABC]; // A and B angular offsets, Z mm offset
   #endif
@@ -289,7 +285,7 @@ void homeaxis(const AxisEnum axis);
     // Return true if the both nozzle and the probe can reach the given point.
     // Note: This won't work on SCARA since the probe offset rotates with the arm.
     inline bool position_is_reachable_by_probe(const float &rx, const float &ry) {
-      return position_is_reachable(rx - (X_PROBE_OFFSET_FROM_EXTRUDER), ry - (Y_PROBE_OFFSET_FROM_EXTRUDER))
+      return position_is_reachable(rx - probe_offset[X_AXIS], ry - probe_offset[Y_AXIS])
              && position_is_reachable(rx, ry, ABS(MIN_PROBE_EDGE));
     }
   #endif
@@ -318,9 +314,9 @@ void homeaxis(const AxisEnum axis);
      *          nozzle must be be able to reach +10,-10.
      */
     inline bool position_is_reachable_by_probe(const float &rx, const float &ry) {
-      return position_is_reachable(rx - (X_PROBE_OFFSET_FROM_EXTRUDER), ry - (Y_PROBE_OFFSET_FROM_EXTRUDER))
-          && WITHIN(rx, MIN_PROBE_X - slop, MAX_PROBE_X + slop)
-          && WITHIN(ry, MIN_PROBE_Y - slop, MAX_PROBE_Y + slop);
+      return position_is_reachable(rx - probe_offset[X_AXIS], ry - probe_offset[Y_AXIS])
+          && WITHIN(rx, probe_min_x() - slop, probe_max_x() + slop)
+          && WITHIN(ry, probe_min_y() - slop, probe_max_y() + slop);
     }
   #endif
 
