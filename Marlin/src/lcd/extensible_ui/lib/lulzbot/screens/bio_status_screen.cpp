@@ -37,6 +37,10 @@
 #define POLY(A) PolyUI::poly_reader_t(A, sizeof(A)/sizeof(A[0]))
 
 const uint8_t shadow_depth = 5;
+const float   max_speed  = 1.00;
+const float   min_speed  = 0.02;
+const float   emax_speed = 2.00;
+const float   emin_speed = 0.70;
 
 using namespace FTDI;
 using namespace Theme;
@@ -248,25 +252,30 @@ void StatusScreen::onRedraw(draw_mode_t what) {
 }
 
 bool StatusScreen::onTouchStart(uint8_t) {
-  increment = fine_motion ? 0.25 : 1;
+  increment = 0;
   return true;
 }
 
 bool StatusScreen::onTouchEnd(uint8_t tag) {
   switch (tag) {
-    case 1:
-    case 2:
-    case 3:
-    case 4:
+    case  1:
+    case  2:
+    case  3:
+    case  4:
     case 12:
       if (!jog_xy) {
         jog_xy = true;
         injectCommands_P(PSTR("M17"));
       }
+      jog({ 0, 0, 0 });
       break;
-    case 9:  GOTO_SCREEN(FilesScreen); break;
+    case  5:
+    case  6:
+      jog({ 0, 0, 0 });
+      break;
+    case  9: GOTO_SCREEN(FilesScreen); break;
     case 10: GOTO_SCREEN(MainMenu); break;
-    case 13: SpinnerDialogBox::enqueueAndWait_P(F("G112"));  break;
+    case 13: GOTO_SCREEN(BioConfirmHomeE); break;
     case 14: SpinnerDialogBox::enqueueAndWait_P(F("G28 Z")); break;
     case 15: GOTO_SCREEN(TemperatureScreen);  break;
     case 16: fine_motion = !fine_motion; break;
@@ -280,25 +289,28 @@ bool StatusScreen::onTouchEnd(uint8_t tag) {
 
 bool StatusScreen::onTouchHeld(uint8_t tag) {
   if (tag >= 1 && tag <= 4 && !jog_xy) return false;
-  if (ExtUI::isMoving()) return false; // Don't allow moves to accumulate
-  #define UI_INCREMENT_AXIS(axis) MoveAxisScreen::setManualFeedrate(axis, increment); UI_INCREMENT(AxisPosition_mm, axis);
-  #define UI_DECREMENT_AXIS(axis) MoveAxisScreen::setManualFeedrate(axis, increment); UI_DECREMENT(AxisPosition_mm, axis);
+  const float s = min_speed + (fine_motion ? 0 : (max_speed - min_speed) * sq(increment));
   switch (tag) {
-    case 1: UI_DECREMENT_AXIS(X);  break;
-    case 2: UI_INCREMENT_AXIS(X);  break;
-    case 4: UI_DECREMENT_AXIS(Y);  break; // NOTE: Y directions inverted because bed rather than needle moves
-    case 3: UI_INCREMENT_AXIS(Y);  break;
-    case 5: UI_DECREMENT_AXIS(Z);  break;
-    case 6: UI_INCREMENT_AXIS(Z);  break;
-    case 7: UI_DECREMENT_AXIS(E0); break;
-    case 8: UI_INCREMENT_AXIS(E0); break;
-    default: return false;
+    case 1: jog({-s,  0,  0}); break;
+    case 2: jog({ s,  0,  0}); break;
+    case 4: jog({ 0, -s,  0}); break; // NOTE: Y directions inverted because bed rather than needle moves
+    case 3: jog({ 0,  s,  0}); break;
+    case 5: jog({ 0,  0, -s}); break;
+    case 6: jog({ 0,  0,  s}); break;
+    case 7: case 8:
+    {
+      if (ExtUI::isMoving()) return false;
+      const feedRate_t feedrate = emin_speed + (fine_motion ? 0 : (emax_speed - emin_speed) * sq(increment));
+      const float increment = 0.25 * feedrate * (tag == 7 ? -1 : 1);
+      MoveAxisScreen::setManualFeedrate(E0, feedrate);
+      UI_INCREMENT(AxisPosition_mm, E0);
+      current_screen.onRefresh();
+      break;
+    }
+    default:
+      return false;
   }
-  #undef UI_DECREMENT_AXIS
-  #undef UI_INCREMENT_AXIS
-  if (increment < 10 && !fine_motion)
-    increment += 0.5;
-  current_screen.onRefresh();
+  increment = min(1.0f, increment + 0.1f);
   return false;
 }
 
@@ -311,11 +323,11 @@ void StatusScreen::setStatusMessage(const char * const str) {
 }
 
 void StatusScreen::onIdle() {
-  if (isPrintingFromMedia())
-    BioPrintingDialogBox::show();
-
   if (refresh_timer.elapsed(STATUS_UPDATE_INTERVAL)) {
-    onRefresh();
+    if (!EventLoop::is_touch_held())
+      onRefresh();
+    if (isPrintingFromMedia())
+      BioPrintingDialogBox::show();
     refresh_timer.start();
   }
 }
