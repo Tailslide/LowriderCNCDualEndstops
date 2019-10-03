@@ -23,7 +23,7 @@
 #pragma once
 
 #include "../ftdi_eve_lib/ftdi_eve_lib.h"
-#include "../language/languages.h"
+#include "../language/language.h"
 #include "../theme/theme.h"
 #include "string_format.h"
 
@@ -177,6 +177,20 @@ class SaveSettingsDialogBox : public DialogBoxBaseClass, public UncachedScreen {
 
     static void promptToSaveSettings();
     static void settingsChanged() {needs_save = true;}
+};
+
+class ConfirmStartPrintDialogBox : public DialogBoxBaseClass, public UncachedScreen {
+  private:
+    inline static const char *getShortFilename() {return getFilename(false);}
+    inline static const char *getLongFilename()  {return getFilename(true);}
+
+    static const char *getFilename(bool longName);
+  public:
+    static void onEntry();
+    static void onRedraw(draw_mode_t);
+    static bool onTouchEnd(uint8_t);
+
+    static void show(uint8_t file_index);
 };
 
 class ConfirmAbortPrintDialogBox : public DialogBoxBaseClass, public UncachedScreen {
@@ -360,7 +374,8 @@ class BaseNumericAdjustmentScreen : public BaseScreen {
           BTN_ACTION,
           BTN_TOGGLE,
           BTN_DISABLED,
-          TEXT_AREA
+          TEXT_AREA,
+          TEXT_LABEL
         } _style;
 
       protected:
@@ -637,9 +652,11 @@ class FilesScreen : public BaseScreen, public CachedScreen<FILES_SCREEN_CACHE, F
     static uint8_t  getTagForLine(uint8_t line) {return line + 2;}
     static uint8_t  getLineForTag(uint8_t tag)  {return  tag - 2;}
     static uint16_t getFileForTag(uint8_t tag);
+    static uint16_t getSelectedFileIndex();
 
-    static const char *getSelectedShortFilename();
-    static const char *getSelectedLongFilename();
+    inline static const char *getSelectedShortFilename() {return getSelectedFilename(false);}
+    inline static const char *getSelectedLongFilename()  {return getSelectedFilename(true);}
+    static const char *getSelectedFilename(bool longName);
 
     static void drawFileButton(const char* filename, uint8_t tag, bool is_dir, bool is_highlighted);
     static void drawFileList();
@@ -723,7 +740,7 @@ class MediaPlayerScreen : public BaseScreen, public UncachedScreen {
     static void playStream(void *obj, media_streamer_func_t*);
 };
 
-#if ENABLED(TOUCH_UI_LANGUAGE_MENU)
+#if NUM_LANGUAGES > 1
   class LanguageMenu : public BaseScreen, public UncachedScreen {
     public:
       static void onRedraw(draw_mode_t);
