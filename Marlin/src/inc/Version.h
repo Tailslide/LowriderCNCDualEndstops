@@ -38,7 +38,7 @@
   /**
    * Marlin release version identifier
    */
-  #define SHORT_BUILD_VERSION "411 bugfix-2.0.x"
+  #define SHORT_BUILD_VERSION "412 bugfix-2.0.x"
 
   /**
    * Verbose version identifier which should contain a reference to the location
@@ -51,7 +51,7 @@
    * here we define this default string as the date where the latest release
    * version was tagged.
    */
-  #define STRING_DISTRIBUTION_DATE "2019-09-24"
+  #define STRING_DISTRIBUTION_DATE "2019-10-02"
 
   /**
    * Required minimum Configuration.h and Configuration_adv.h file versions.
