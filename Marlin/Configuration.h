@@ -71,7 +71,7 @@
 // @section info
 
 // Author info of this build printed to the host during boot and M115
-#define STRING_CONFIG_H_AUTHOR "(V1 Engineering, Ryan, 411)" // Who made the changes.
+#define STRING_CONFIG_H_AUTHOR "(V1 Engineering, Ryan, 412)" // Who made the changes.
 
 /**
  * *** VENDORS PLEASE READ ***
@@ -1870,6 +1870,11 @@
 // http://reprap.org/wiki/RepRapDiscount_Full_Graphic_Smart_Controller
 //
 #define REPRAP_DISCOUNT_FULL_GRAPHIC_SMART_CONTROLLER
+
+// If you want you can define your own set of delays in Configuration.h
+//#define ST7920_DELAY_1 DELAY_NS(0)
+#define ST7920_DELAY_2 DELAY_NS(250)
+#define ST7920_DELAY_3 DELAY_NS(250)
 
 //
 // ReprapWorld Graphical LCD
