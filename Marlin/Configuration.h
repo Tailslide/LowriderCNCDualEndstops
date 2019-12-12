@@ -218,7 +218,7 @@
  */
 //#define MAGNETIC_PARKING_EXTRUDER
 
-#if EITHER(PARKING_EXTRUDER, MAGNETIC_PARKING_EXTRUDER)
+#if ENABLED(PARKING_EXTRUDER) || ENABLED(MAGNETIC_PARKING_EXTRUDER)
 
   #define PARKING_EXTRUDER_PARKING_X { -78, 184 }     // X positions for parking the extruders
   #define PARKING_EXTRUDER_GRAB_DISTANCE 1            // (mm) Distance to move beyond the parking point to grab the extruder
@@ -734,15 +734,22 @@
  * When changing speed and direction, if the difference is less than the
  * value set here, it may happen instantaneously.
  */
-
+<<<<<<< HEAD
 
 #if DISABLED(JUNCTION_DEVIATION)
   #define DEFAULT_XJERK 3.0
   #define DEFAULT_YJERK 3.0
   #define DEFAULT_ZJERK  0.2
 #endif
+=======
+#if DISABLED(JUNCTION_DEVIATION)
+  #define DEFAULT_XJERK 10.0
+  #define DEFAULT_YJERK 10.0
+  #define DEFAULT_ZJERK  0.3
+#endif
 
 #define DEFAULT_EJERK    5.0  // May be used by Linear Advance
+>>>>>>> upstream/bugfix-2.0.x
 
 /**
  * S-Curve Acceleration
@@ -2083,7 +2090,7 @@
  *  - Change to green once print has finished
  *  - Turn off after the print has finished and the user has pushed a button
  */
-#if ANY(BLINKM, RGB_LED, RGBW_LED, PCA9632, PCA9533, NEOPIXEL_LED)
+#if ENABLED(BLINKM) || ENABLED(RGB_LED) || ENABLED(RGBW_LED) || ENABLED(PCA9632) || ENABLED(PCA9533)|| ENABLED(NEOPIXEL_LED)
   #define PRINTER_EVENT_LEDS
 #endif
 

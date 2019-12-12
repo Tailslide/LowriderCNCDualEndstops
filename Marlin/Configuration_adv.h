@@ -78,7 +78,7 @@
   #define THERMAL_PROTECTION_HYSTERESIS 4     // Degrees Celsius
 
   //#define ADAPTIVE_FAN_SLOWING              // Slow part cooling fan if temperature drops
-  #if BOTH(ADAPTIVE_FAN_SLOWING, PIDTEMP)
+  #if ENABLED(ADAPTIVE_FAN_SLOWING) && ENABLED(PIDTEMP)
     //#define NO_FAN_SLOWING_IN_PID_TUNING    // Don't slow fan speed during M303
   #endif
 
@@ -406,20 +406,20 @@
  * The inactive carriage is parked automatically to prevent oozing.
  * X1 is the left carriage, X2 the right. They park and home at opposite ends of the X axis.
  * By default the X2 stepper is assigned to the first unused E plug on the board.
- *
+ * 
  * The following Dual X Carriage modes can be selected with M605 S<mode>:
- *
+ * 
  *   0 : (FULL_CONTROL) The slicer has full control over both X-carriages and can achieve optimal travel
  *       results as long as it supports dual X-carriages. (M605 S0)
- *
+ * 
  *   1 : (AUTO_PARK) The firmware automatically parks and unparks the X-carriages on tool-change so
  *       that additional slicer support is not required. (M605 S1)
- *
+ * 
  *   2 : (DUPLICATION) The firmware moves the second X-carriage and extruder in synchronization with
  *       the first X-carriage and extruder, to print 2 copies of the same object at the same time.
  *       Set the constant X-offset and temperature differential with M605 S2 X[offs] R[deg] and
  *       follow with M605 S2 to initiate duplicated movement.
- *
+ * 
  *   3 : (MIRRORED) Formbot/Vivedino-inspired mirrored mode in which the second extruder duplicates
  *       the movement of the first except the second extruder is reversed in the X axis.
  *       Set the initial X offset and temperature differential with M605 S2 X[offs] R[deg] and
@@ -543,6 +543,11 @@
 // Backlash Compensation
 // Adds extra movement to axes on direction-changes to account for backlash.
 //
+<<<<<<< HEAD
+#if ENABLED(BACKLASH_COMPENSATION)
+  // Define values for backlash distance and correction.
+  // If BACKLASH_GCODE is enabled these values are the defaults.
+=======
 //#define BACKLASH_COMPENSATION
 #if ENABLED(BACKLASH_COMPENSATION)
   // Define values for backlash distance and correction.
@@ -1483,6 +1488,12 @@
     #define Z_RSENSE     0.11
   #endif
 
+  #if AXIS_IS_TMC(Z)
+    #define Z_CURRENT     800
+    #define Z_MICROSTEPS   16
+    #define Z_RSENSE     0.11
+  #endif
+
   #if AXIS_IS_TMC(Z2)
     #define Z2_CURRENT    800
     #define Z2_MICROSTEPS  16
@@ -2250,6 +2261,55 @@
   //#define WEBSUPPORT        // Start a webserver with auto-discovery
   //#define OTASUPPORT        // Support over-the-air firmware updates
 #endif
+
+/**
+ * Prusa Multi-Material Unit v2
+ * Enable in Configuration.h
+ */
+#if ENABLED(PRUSA_MMU2)
+
+  // Serial port used for communication with MMU2.
+  // For AVR enable the UART port used for the MMU. (e.g., internalSerial)
+  // For 32-bit boards check your HAL for available serial ports. (e.g., Serial2)
+  #define INTERNAL_SERIAL_PORT 2
+  #define MMU2_SERIAL internalSerial
+
+  // Use hardware reset for MMU if a pin is defined for it
+  //#define MMU2_RST_PIN 23
+
+  // Enable if the MMU2 has 12V stepper motors (MMU2 Firmware 1.0.2 and up)
+  //#define MMU2_MODE_12V
+
+  // G-code to execute when MMU2 F.I.N.D.A. probe detects filament runout
+  #define MMU2_FILAMENT_RUNOUT_SCRIPT "M600"
+
+  // Add an LCD menu for MMU2
+  //#define MMU2_MENUS
+  #if ENABLED(MMU2_MENUS)
+    // Settings for filament load / unload from the LCD menu.
+    // This is for Prusa MK3-style extruders. Customize for your hardware.
+    #define MMU2_FILAMENTCHANGE_EJECT_FEED 80.0
+    #define MMU2_LOAD_TO_NOZZLE_SEQUENCE \
+      {  7.2,  562 }, \
+      { 14.4,  871 }, \
+      { 36.0, 1393 }, \
+      { 14.4,  871 }, \
+      { 50.0,  198 }
+
+    #define MMU2_RAMMING_SEQUENCE \
+      {   1.0, 1000 }, \
+      {   1.0, 1500 }, \
+      {   2.0, 2000 }, \
+      {   1.5, 3000 }, \
+      {   2.5, 4000 }, \
+      { -15.0, 5000 }, \
+      { -14.0, 1200 }, \
+      {  -6.0,  600 }, \
+      {  10.0,  700 }, \
+      { -10.0,  400 }, \
+      { -50.0, 2000 }
+
+  #endif
 
 /**
  * Prusa Multi-Material Unit v2
