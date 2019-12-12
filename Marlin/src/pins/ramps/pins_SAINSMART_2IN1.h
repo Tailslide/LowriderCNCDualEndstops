@@ -1,8 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
- * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ *
+ * Based on Sprinter and grbl.
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +17,26 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 #pragma once
 
-#include <ESPAsyncWebServer.h>
+/**
+ * Sainsmart 2-in-1 pin assignments
+ */
 
-extern AsyncWebServer server;
+#if HOTENDS > 2 || E_STEPPERS > 2
+  #error "Sainsmart 2-in-1 supports up to 2 hotends / E-steppers. Comment out this line to continue."
+#endif
 
-#define DEFAULT_WIFI_HOSTNAME "marlin"
+#define BOARD_INFO_NAME "Sainsmart"
 
-void wifi_init();
+//
+// Heaters / Fans
+//
+#define RAMPS_D10_PIN 9   // E
+#define RAMPS_D9_PIN  7   // F PART FAN in front of board next to Extruder heat
+     // RAMPS_D8_PIN  8   // B
+#define MOSFET_D_PIN 10   // F / E
+
+#include "pins_RAMPS.h"

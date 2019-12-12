@@ -1,8 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
- * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ *
+ * Based on Sprinter and grbl.
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +17,23 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 #pragma once
 
-#include <ESPAsyncWebServer.h>
+/**
+ * Geeetech A20M pin assignment
+ */
 
-extern AsyncWebServer server;
+#define LCD_PINS_RS       5
+#define LCD_PINS_ENABLE  36
+#define LCD_PINS_D4      21
+#define LCD_PINS_D7       6
 
-#define DEFAULT_WIFI_HOSTNAME "marlin"
+#if ENABLED(NEWPANEL)
+  #define BTN_EN1        16
+  #define BTN_EN2        17
+  #define BTN_ENC        19
+#endif
 
-void wifi_init();
+#include "pins_GT2560_V3.h"

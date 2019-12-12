@@ -1,8 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
- * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ *
+ * Based on Sprinter and grbl.
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +17,17 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 #pragma once
 
-#include <ESPAsyncWebServer.h>
+/**
+ * K8200 Arduino Mega with RAMPS v1.3 pin assignments
+ * Identical to 3DRAG
+ */
 
-extern AsyncWebServer server;
+#define BOARD_INFO_NAME         "Velleman K8200"
+#define DEFAULT_MACHINE_NAME    "K8200"
+#define DEFAULT_SOURCE_CODE_URL "https://github.com/CONSULitAS/Marlin-K8200"
 
-#define DEFAULT_WIFI_HOSTNAME "marlin"
-
-void wifi_init();
+#include "pins_3DRAG.h"

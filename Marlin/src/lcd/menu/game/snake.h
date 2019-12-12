@@ -1,8 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
- * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ *
+ * Based on Sprinter and grbl.
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +17,22 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 #pragma once
 
-#include <ESPAsyncWebServer.h>
+#include "types.h"
 
-extern AsyncWebServer server;
+typedef struct {
+  int8_t snake_dir,     // NESW
+         foodx, foody,
+         food_cnt,
+         old_encoder;
+  pos_t snake_tail[50];
+  fixed_t snakex, snakey;
+  uint8_t head_ind;
+} snake_data_t;
 
-#define DEFAULT_WIFI_HOSTNAME "marlin"
+class SnakeGame : MarlinGame { public: static void enter_game(), game_screen(); };
 
-void wifi_init();
+extern SnakeGame snake;

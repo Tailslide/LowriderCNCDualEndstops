@@ -1,8 +1,10 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
- * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ *
+ * Based on Sprinter and grbl.
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2017 Victor Perez
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +18,20 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 #pragma once
 
-#include <ESPAsyncWebServer.h>
+#include <Servo.h>
 
-extern AsyncWebServer server;
-
-#define DEFAULT_WIFI_HOSTNAME "marlin"
-
-void wifi_init();
+// Inherit and expand on the official library
+class libServo : public Servo {
+  public:
+    int8_t attach(const int pin);
+    int8_t attach(const int pin, const int min, const int max);
+    void move(const int value);
+  private:
+    typedef Servo super;
+    uint16_t min_ticks, max_ticks;
+    uint8_t servoIndex;               // index into the channel data for this servo
+};

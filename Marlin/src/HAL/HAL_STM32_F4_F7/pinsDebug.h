@@ -1,8 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
- * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +14,14 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 #pragma once
 
-#include <ESPAsyncWebServer.h>
-
-extern AsyncWebServer server;
-
-#define DEFAULT_WIFI_HOSTNAME "marlin"
-
-void wifi_init();
+#ifdef NUM_DIGITAL_PINS             // Only in ST's Arduino core (STM32duino, STM32Core)
+  #include "../HAL_STM32/pinsDebug_STM32duino.h"
+#elif defined(BOARD_NR_GPIO_PINS)   // Only in STM32GENERIC (Maple)
+  #include "../HAL_STM32/pinsDebug_STM32GENERIC.h"
+#else
+  #error "M43 Pins Debugging not supported for this board."
+#endif

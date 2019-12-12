@@ -1,8 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
- * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ *
+ * Based on Sprinter and grbl.
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +17,17 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 #pragma once
 
-#include <ESPAsyncWebServer.h>
+#define BOARD_INFO_NAME "MAKEboard Mini"
 
-extern AsyncWebServer server;
+//
+// Only 3 Limit Switch plugs on Micromake C1
+//
+#define X_STOP_PIN          2
+#define Y_STOP_PIN         15
+#define Z_STOP_PIN         19
 
-#define DEFAULT_WIFI_HOSTNAME "marlin"
-
-void wifi_init();
+#include "pins_RAMPS.h"

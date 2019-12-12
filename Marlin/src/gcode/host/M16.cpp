@@ -1,8 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
- * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ *
+ * Based on Sprinter and grbl.
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +17,24 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-#pragma once
 
-#include <ESPAsyncWebServer.h>
+#include "../../inc/MarlinConfigPre.h"
 
-extern AsyncWebServer server;
+#if ENABLED(EXPECTED_PRINTER_CHECK)
 
-#define DEFAULT_WIFI_HOSTNAME "marlin"
+#include "../gcode.h"
+#include "../../Marlin.h"
 
-void wifi_init();
+/**
+ * M16: Expected Printer Check
+ */
+void GcodeSuite::M16() {
+
+  if (strcmp_P(parser.string_arg, PSTR(MACHINE_NAME)))
+    kill(PSTR(MSG_EXPECTED_PRINTER));
+
+}
+
+#endif

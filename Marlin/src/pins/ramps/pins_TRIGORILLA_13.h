@@ -1,8 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
- * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ *
+ * Based on Sprinter and grbl.
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +17,24 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 #pragma once
 
-#include <ESPAsyncWebServer.h>
+/**
+ * Arduino Mega with RAMPS v1.3 for Anycubic
+ */
 
-extern AsyncWebServer server;
+#define BOARD_INFO_NAME "Anycubic RAMPS 1.3"
 
-#define DEFAULT_WIFI_HOSTNAME "marlin"
+#define IS_RAMPS_EFB
+#define RAMPS_D9_PIN         44
+#define FAN2_PIN              9
+#define ORIG_E0_AUTO_FAN_PIN  9
 
-void wifi_init();
+#include "pins_RAMPS_13.h"
+
+#undef E1_STEP_PIN
+#undef E1_DIR_PIN
+#undef E1_ENABLE_PIN
+#undef E1_CS_PIN

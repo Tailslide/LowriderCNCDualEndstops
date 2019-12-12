@@ -1,8 +1,8 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
- * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ *
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * SAMD51 HAL developed by Giuliano Zaro (AKA GMagician)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +16,24 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 #pragma once
 
-#include <ESPAsyncWebServer.h>
+#define _useTimer1
+#define _useTimer2
 
-extern AsyncWebServer server;
+#define TRIM_DURATION           5   // compensation ticks to trim adjust for digitalWrite delays
+#define SERVO_TIMER_PRESCALER   64  // timer prescaler factor to 64 (avoid overflowing 16-bit clock counter, at 120MHz this is 1831 ticks per millisecond
 
-#define DEFAULT_WIFI_HOSTNAME "marlin"
+#define SERVO_TC                3
 
-void wifi_init();
+typedef enum {
+  #ifdef _useTimer1
+    _timer1,
+  #endif
+  #ifdef _useTimer2
+    _timer2,
+  #endif
+  _Nbr_16timers
+} timer16_Sequence_t;

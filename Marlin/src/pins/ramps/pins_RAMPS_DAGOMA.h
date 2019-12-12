@@ -1,8 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
- * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ *
+ * Based on Sprinter and grbl.
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +17,24 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 #pragma once
 
-#include <ESPAsyncWebServer.h>
+#if HOTENDS > 2 || E_STEPPERS > 2
+  #error "Dagoma3D F5 RAMPS supports only 2 hotends / E-steppers. Comment out this line to continue."
+#endif
 
-extern AsyncWebServer server;
+#define BOARD_INFO_NAME "Dagoma3D F5 RAMPS"
 
-#define DEFAULT_WIFI_HOSTNAME "marlin"
+#define X_STOP_PIN          2
+#define Y_STOP_PIN          3
+#define Z_STOP_PIN         15
+#define FIL_RUNOUT_PIN     39
 
-void wifi_init();
+#define ORIG_E0_AUTO_FAN_PIN 7
+
+//
+// Import RAMPS 1.4 pins
+//
+#include "pins_RAMPS.h"

@@ -1,8 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
- * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ *
+ * Based on Sprinter and grbl.
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +17,22 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 #pragma once
 
-#include <ESPAsyncWebServer.h>
+#include "types.h"
 
-extern AsyncWebServer server;
+#define BRICK_ROWS   4
+#define BRICK_COLS  16
 
-#define DEFAULT_WIFI_HOSTNAME "marlin"
+typedef struct {
+  uint8_t balls_left, brick_count;
+  uint16_t bricks[BRICK_ROWS];
+  int8_t paddle_x, hit_dir;
+  fixed_t ballx, bally, ballh, ballv;
+} brickout_data_t;
 
-void wifi_init();
+class BrickoutGame : MarlinGame { public: static void enter_game(), game_screen(); };
+
+extern BrickoutGame brickout;
