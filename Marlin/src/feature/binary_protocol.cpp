@@ -1,8 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
- * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ *
+ * Based on Sprinter and grbl.
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +17,20 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
-#pragma once
 
-#include <ESPAsyncWebServer.h>
+#include "../inc/MarlinConfigPre.h"
 
-extern AsyncWebServer server;
+#if ENABLED(BINARY_FILE_TRANSFER)
 
-#define DEFAULT_WIFI_HOSTNAME "marlin"
+#include "../sd/cardreader.h"
+#include "binary_protocol.h"
 
-void wifi_init();
+char* SDFileTransferProtocol::Packet::Open::data = nullptr;
+size_t SDFileTransferProtocol::data_waiting, SDFileTransferProtocol::transfer_timeout, SDFileTransferProtocol::idle_timeout;
+bool SDFileTransferProtocol::transfer_active, SDFileTransferProtocol::dummy_transfer, SDFileTransferProtocol::compression;
+
+BinaryStream binaryStream[NUM_SERIAL];
+
+#endif // BINARY_FILE_TRANSFER

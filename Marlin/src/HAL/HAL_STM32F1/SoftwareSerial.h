@@ -1,8 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
- * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +14,29 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 #pragma once
 
-#include <ESPAsyncWebServer.h>
+#include <stdint.h>
 
-extern AsyncWebServer server;
+#define SW_SERIAL_PLACEHOLDER 1
 
-#define DEFAULT_WIFI_HOSTNAME "marlin"
+class SoftwareSerial {
+public:
+  SoftwareSerial(int8_t RX_pin, int8_t TX_pin);
 
-void wifi_init();
+  void begin(const uint32_t baudrate);
+
+  bool available();
+
+  uint8_t read();
+  uint16_t write(uint8_t byte);
+  void flush();
+
+  void listen();
+  void stopListening();
+
+protected:
+  bool listening;
+};

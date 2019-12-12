@@ -1,8 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
- * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
- * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +14,22 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 #pragma once
 
-#include <ESPAsyncWebServer.h>
-
-extern AsyncWebServer server;
-
-#define DEFAULT_WIFI_HOSTNAME "marlin"
-
-void wifi_init();
+/**
+ * Define SPI Pins: SCK, MISO, MOSI, SS
+ */
+#ifndef SCK_PIN
+  #define SCK_PIN   PA5
+#endif
+#ifndef MISO_PIN
+  #define MISO_PIN  PA6
+#endif
+#ifndef MOSI_PIN
+  #define MOSI_PIN  PA7
+#endif
+#ifndef SS_PIN
+  #define SS_PIN    PA8
+#endif
